@@ -134,7 +134,7 @@ void trim(char * c) {
 }
 bool read_buf(char * buf, const char * key, char * value) {
 	if (strncmp(buf, key, strlen(key)) == 0) {
-		strcpy(value, buf + after_equal(buf));
+		strcpy(value, buf + after_equal(buf));			// 获取等于号后面的数据 after_equal函数用于获取等于号的位置
 		trim(value);
 		if (DEBUG)
 			printf("%s\n", value);
@@ -142,14 +142,14 @@ bool read_buf(char * buf, const char * key, char * value) {
 	}
 	return 0;
 }
-void read_int(char * buf, const char * key, int * value) {
+void read_int(char * buf, const char * key, int * value) {			// buf是获取到字符串形式的数据，value是等待赋值的数据，key变量名字
 	char buf2[BUFFER_SIZE];
 	if (read_buf(buf, key, buf2))
 		sscanf(buf2, "%d", value);
 
 }
 // read the configue file
-void init_mysql_conf() {
+void init_mysql_conf() {					// 读取配置文件
 	FILE *fp = NULL;
 	char buf[BUFFER_SIZE];
 	host_name[0] = 0;
@@ -164,32 +164,33 @@ void init_mysql_conf() {
 	strcpy(oj_lang_set, "0,1,2,3");
 	fp = fopen("./etc/judge.conf", "r");
 	if (fp != NULL) {
-		while (fgets(buf, BUFFER_SIZE - 1, fp)) {
-			read_buf(buf, "OJ_HOST_NAME", host_name);
-			read_buf(buf, "OJ_USER_NAME", user_name);
-			read_buf(buf, "OJ_PASSWORD", password);
-			read_buf(buf, "OJ_DB_NAME", db_name);
-			read_int(buf, "OJ_PORT_NUMBER", &port_number);
-			read_int(buf, "OJ_RUNNING", &max_running);
-			read_int(buf, "OJ_SLEEP_TIME", &sleep_time);
-			read_int(buf, "OJ_TOTAL", &oj_tot);
+		while (fgets(buf, BUFFER_SIZE - 1, fp)) {				// 下面这里都是从配置文件中读取出数据，然后赋值给相关变量参数
+			read_buf(buf, "OJ_HOST_NAME", host_name);			// 127.0.0.1
+			read_buf(buf, "OJ_USER_NAME", user_name);			// root
+			read_buf(buf, "OJ_PASSWORD", password);				// 
+			read_buf(buf, "OJ_DB_NAME", db_name);				// jol
+			read_int(buf, "OJ_PORT_NUMBER", &port_number);		// 3305
+			read_int(buf, "OJ_RUNNING", &max_running);			// 4
+			read_int(buf, "OJ_SLEEP_TIME", &sleep_time);		// 1
+			read_int(buf, "OJ_TOTAL", &oj_tot);					// 1
+	
+			read_int(buf, "OJ_MOD", &oj_mod);					// 0
 
-			read_int(buf, "OJ_MOD", &oj_mod);
-
-			read_int(buf, "OJ_HTTP_JUDGE", &http_judge);
-			read_buf(buf, "OJ_HTTP_BASEURL", http_baseurl);
-			read_buf(buf, "OJ_HTTP_USERNAME", http_username);
-			read_buf(buf, "OJ_HTTP_PASSWORD", http_password);
-			read_buf(buf, "OJ_LANG_SET", oj_lang_set);
-			
-			read_int(buf, "OJ_REDISENABLE", &oj_redis);
-                        read_buf(buf, "OJ_REDISSERVER", oj_redisserver);
-                        read_int(buf, "OJ_REDISPORT", &oj_redisport);
-                        read_buf(buf, "OJ_REDISAUTH", oj_redisauth);
-                        read_buf(buf, "OJ_REDISQNAME", oj_redisqname);
+			read_int(buf, "OJ_HTTP_JUDGE", &http_judge);		// 0
+			read_buf(buf, "OJ_HTTP_BASEURL", http_baseurl);		// http://127.0.0.1/JudgeOnline
+			read_buf(buf, "OJ_HTTP_USERNAME", http_username);	// admin
+			read_buf(buf, "OJ_HTTP_PASSWORD", http_password);	// admin
+			read_buf(buf, "OJ_LANG_SET", oj_lang_set);		 	// ??? 不是很懂
+				
+			read_int(buf, "OJ_REDISENABLE", &oj_redis);			// 0
+                        read_buf(buf, "OJ_REDISSERVER", oj_redisserver);	// 127.0.0.1
+                        read_int(buf, "OJ_REDISPORT", &oj_redisport);		// 6379
+                        read_buf(buf, "OJ_REDISAUTH", oj_redisauth);		// 123456
+                        read_buf(buf, "OJ_REDISQNAME", oj_redisqname);		// hustoj
 
 
 		}
+		// 初始化query语句 从mysql中提取待解决的 solution_id
 		sprintf(query,
 				"SELECT solution_id FROM solution WHERE language in (%s) and result<2 and MOD(solution_id,%d)=%d ORDER BY result ASC,solution_id ASC limit %d",
 				oj_lang_set, oj_tot, oj_mod, max_running * 2);
@@ -226,7 +227,7 @@ void run_client(int runid, int clientid) {
 
 	if (!DEBUG)
 		execl("/usr/bin/judge_client", "/usr/bin/judge_client", runidstr, buf,
-				oj_home, (char *) NULL);
+				oj_home, (char *) NULL);					// 执行 judge_client 程序
 	else
 		execl("/usr/bin/judge_client", "/usr/bin/judge_client", runidstr, buf,
 				oj_home, "debug", (char *) NULL);
@@ -245,7 +246,7 @@ int executesql(const char * sql) {
 		return 0;
 }
 
-int init_mysql() {
+int init_mysql() {						// mysql连接的初始化
 	if (conn == NULL) {
 		conn = mysql_init(NULL);		// init the database connection
 		/* connect the database */
@@ -326,7 +327,7 @@ int _get_jobs_http(int * jobs) {
 		jobs[i++] = 0;
 	return ret;
 }
-int _get_jobs_mysql(int * jobs) {
+int _get_jobs_mysql(int * jobs) {							// 从数据库中获取需要评测的提交
 	if (mysql_real_query(conn, query, strlen(query))) {
 		if (DEBUG)
 			write_log("%s", mysql_error(conn));
@@ -367,14 +368,14 @@ int _get_jobs_redis(int * jobs){
 }
 
 int get_jobs(int * jobs) {
-	if (http_judge) {
+	if (http_judge) {						// http_judge的默认值是0
 		return _get_jobs_http(jobs);
 	} else {		
 		if(oj_redis){
-                        return _get_jobs_redis(jobs);
-                }else{
-                        return _get_jobs_mysql(jobs);
-                }
+           return _get_jobs_redis(jobs);
+        }else{
+           return _get_jobs_mysql(jobs);
+        }
 	}
 }
 
@@ -382,7 +383,7 @@ bool _check_out_mysql(int solution_id, int result) {
 	char sql[BUFFER_SIZE];
 	sprintf(sql,
 			"UPDATE solution SET result=%d,time=0,memory=0,judgetime=NOW() WHERE solution_id=%d and result<2 LIMIT 1",
-			result, solution_id);
+			result, solution_id);			// 生成数据库查询语句
 	if (mysql_real_query(conn, sql, strlen(sql))) {
 		syslog(LOG_ERR | LOG_DAEMON, "%s", mysql_error(conn));
 		return false;
@@ -407,7 +408,7 @@ bool _check_out_http(int solution_id, int result) {
 	return ret;
 }
 bool check_out(int solution_id, int result) {
-        if(oj_redis) return true;
+    if(oj_redis) return true;
 	if (http_judge) {
 		return _check_out_http(solution_id, result);
 	} else
@@ -418,51 +419,50 @@ int work() {
 //      char buf[1024];
 	static int retcnt = 0;
 	int i = 0;
-	static pid_t ID[100];
-	static int workcnt = 0;
+	static pid_t ID[100];			// 进程号列表
+	static int workcnt = 0;			// 当前正在工作的进程数量
 	int runid = 0;
 	int jobs[max_running * 2 + 1];
 	pid_t tmp_pid = 0;
 
 	//for(i=0;i<max_running;i++){
 	//      ID[i]=0;
-	//}
+	//
 
 	//sleep_time=sleep_tmp;
 	/* get the database info */
-	if (!get_jobs(jobs))
+	if (!get_jobs(jobs))			// 获取待评测提交列表
 		retcnt = 0;
 	/* exec the submit */
 	for (int j = 0; jobs[j] > 0; j++) {
-		runid = jobs[j];
+		runid = jobs[j];			// 当前需要解决的提交的solution_id
 		if (runid % oj_tot != oj_mod)
 			continue;
 		if (DEBUG)
 			write_log("Judging solution %d", runid);
-		if (workcnt >= max_running) {           // if no more client can running
-			tmp_pid = waitpid(-1, NULL, 0);     // wait 4 one child exit
-			for (i = 0; i < max_running; i++){     // get the client id
-				if (ID[i] == tmp_pid){
+		if (workcnt >= max_running) {           // if no more client can running  正在工作的子进程的数量大于等于最大子进程数量的时候
+			tmp_pid = waitpid(-1, NULL, 0);     // wait 4 one child exit	等待有子进程结束 相当于wait()函数 以阻塞的方式等待
+			for (i = 0; i < max_running; i++){  // get the client id 寻找结束的那个子进程
+				if (ID[i] == tmp_pid){			// 当找到结束的子进程ID后，重置该ID
 					workcnt--;
 					retcnt++;
 					ID[i] = 0;
 					break; // got the client id
 				}
 			}
-		} else {                                             // have free client
-
-			for (i = 0; i < max_running; i++)     // find the client id
+		} else {                             	// have free client		如果当前正在运行的子进程数量尚未达到最大数
+			for (i = 0; i < max_running; i++)   // find the client id	寻找列表中空闲的那个ID
 				if (ID[i] == 0)
 					break;    // got the client id
 		}
-		if(i<max_running){
+		if (i<max_running){
 			if (workcnt < max_running && check_out(runid, OJ_CI)) {
 				workcnt++;
-				ID[i] = fork();                                   // start to fork
-				if (ID[i] == 0) {
+				ID[i] = fork();                                 // start to fork
+				if (ID[i] == 0) {								// 子进程
 					if (DEBUG)
 						write_log("<<=sid=%d===clientid=%d==>>\n", runid, i);
-					run_client(runid, i);    // if the process is the son, run it
+					run_client(runid, i);    // if the process is the son, run it			// 运行 judge_client 来评测提交
 					exit(0);
 				}
 
@@ -496,23 +496,23 @@ int work() {
 
 int lockfile(int fd) {
 	struct flock fl;
-	fl.l_type = F_WRLCK;
+	fl.l_type = F_WRLCK;			// 写锁
 	fl.l_start = 0;
 	fl.l_whence = SEEK_SET;
 	fl.l_len = 0;
-	return (fcntl(fd, F_SETLK, &fl));
+	return (fcntl(fd, F_SETLK, &fl));		// 其他进程不能修改该文件
 }
 
-int already_running() {
+int already_running() {				// 判断进程文件是否已经创建
 	int fd;
 	char buf[16];
-	fd = open(lock_file, O_RDWR | O_CREAT, LOCKMODE);
+	fd = open(lock_file, O_RDWR | O_CREAT, LOCKMODE);				// 创建进程文件并写入
 	if (fd < 0) {
 		syslog(LOG_ERR | LOG_DAEMON, "can't open %s: %s", LOCKFILE,
 				strerror(errno));
 		exit(1);
 	}
-	if (lockfile(fd) < 0) {
+	if (lockfile(fd) < 0) {			// 给进程文件上锁
 		if (errno == EACCES || errno == EAGAIN) {
 			close(fd);
 			return 1;
@@ -522,12 +522,11 @@ int already_running() {
 		exit(1);
 	}
 	ftruncate(fd, 0);
-	sprintf(buf, "%d", getpid());
-	write(fd, buf, strlen(buf) + 1);
+	sprintf(buf, "%d", getpid());					
+	write(fd, buf, strlen(buf) + 1);		// 将当前进程号写入对应的 .pid文件 防止程序重复开启
 	return (0);
 }
-int daemon_init(void)
-
+int daemon_init(void)						// 创建守护进程
 {
 	pid_t pid;
 
@@ -535,26 +534,26 @@ int daemon_init(void)
 		return (-1);
 
 	else if (pid != 0)
-		exit(0); /* parent exit */
+		exit(0); /* parent exit */			// 守护进程创建成功后，父进程退出
 
-	/* child continues */
+	/* child continues */					// 接下来的是子进程内容
 
-	setsid(); /* become session leader */
+	setsid(); /* become session leader */	// 将当前子进程变为领导进程
 
 	chdir(oj_home); /* change working directory */
 
-	umask(0); /* clear file mode creation mask */
+	umask(0); /* clear file mode creation mask */		// 暂时看不懂，先放着
 
-	close(0); /* close stdin */
-	close(1); /* close stdout */
-	
-	close(2); /* close stderr */
+	close(0); /* close stdin */			// 关闭标准输入套接字
+	close(1); /* close stdout */		// 关闭标准输出套接字
+		
+	close(2); /* close stderr */		// 关闭标准错误输出套接字
 	
 	int fd = open( "/dev/null", O_RDWR );
-	dup2( fd, 0 );
+	dup2( fd, 0 );						// 将0、1、2套接字重定向到/dev/null中
 	dup2( fd, 1 );
 	dup2( fd, 2 );
-	if ( fd > 2 ){
+	if ( fd > 2 ){						// 一般在0、1、2套接字关闭后，fd会是0
 		close( fd );
 	}
 
@@ -568,15 +567,15 @@ int main(int argc, char** argv) {
 		strcpy(oj_home, argv[1]);
 	else
 		strcpy(oj_home, "/home/judge");
-	chdir(oj_home);    // change the dir
+	chdir(oj_home);    // change the dir					// 进入oj_hone文件夹
 
-	sprintf(lock_file,"%s/etc/judge.pid",oj_home);
-	if (!DEBUG)
-		daemon_init();
-	if ( already_running()) {
+	sprintf(lock_file,"%s/etc/judge.pid",oj_home);			// 进程文件目录
+	if (!DEBUG)												// DEBUG默认值是0
+		daemon_init();										// 创建守护进程
+	if ( already_running()) {								// 准备工作，写进程文件，同时判断是否已有相同程序已在运行
 		syslog(LOG_ERR | LOG_DAEMON,
 				"This daemon program is already running!\n");
-		printf("%s already has one judged on it!\n",oj_home);
+		printf("%s already has one judged on it!\n",oj_home);	// 如果进程文件已经存在，那么说明已经有一个评测机程序在运行了
 		return 1;
 	}
 	if(!DEBUG)

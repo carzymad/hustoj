@@ -54,21 +54,21 @@
 #define STD_F_LIM (STD_MB<<5)
 #define STD_M_LIM (STD_MB<<7)
 #define BUFFER_SIZE 5120
-
+// crazy_mad注释：各种评测结果
 #define OJ_WT0 0
 #define OJ_WT1 1
-#define OJ_CI 2
-#define OJ_RI 3
-#define OJ_AC 4
-#define OJ_PE 5
-#define OJ_WA 6
-#define OJ_TL 7
-#define OJ_ML 8
-#define OJ_OL 9
-#define OJ_RE 10
-#define OJ_CE 11
-#define OJ_CO 12
-#define OJ_TR 13
+#define OJ_CI 2				//
+#define OJ_RI 3				//
+#define OJ_AC 4				// 正确
+#define OJ_PE 5				// 格式错误
+#define OJ_WA 6				// 答案错误
+#define OJ_TL 7				// 超时
+#define OJ_ML 8				// 内存限制错误
+#define OJ_OL 9				//
+#define OJ_RE 10			// 运行中错误
+#define OJ_CE 11			// 编译错误
+#define OJ_CO 12			//
+#define OJ_TR 13			//
 /*copy from ZOJ
  http://code.google.com/p/zoj/source/browse/trunk/judge_client/client/tracer.cc?spec=svn367&r=367#39
  */
@@ -118,20 +118,20 @@ static int use_ptrace = 1;
 
 //static int sleep_tmp;
 #define ZOJ_COM
-MYSQL *conn;
+MYSQL *conn;				// 连接mysql
 
 static char lang_ext[18][8] = { "c", "cc", "pas", "java", "rb", "sh", "py",
 		"php", "pl", "cs", "m", "bas", "scm","c","cc","lua","js","go" };
 //static char buf[BUFFER_SIZE];
 int data_list_has(char * file){
-   for(int i=0;i<data_list_len;i++){
-       if(strcmp(data_list[i],file)==0)
+   for (int i=0; i<data_list_len; i++) {
+       if (strcmp(data_list[i],file) == 0)
 		return 1;
    }
    return 0;
 }
 int data_list_add(char * file){
-   if(data_list_len<BUFFER_SIZE-1){
+   if(data_list_len<BUFFER_SIZE-1){				// BUFFER_SIZE 印象中难道不是buf的长度。。。？
 	strcpy(data_list[data_list_len],file);
 	data_list_len++;
    	return 0;
@@ -140,45 +140,45 @@ int data_list_add(char * file){
    }
 }
 long get_file_size(const char * filename) {
-	struct stat f_stat;
+	struct stat f_stat;							// 获取文件相关信息 参考博客http://www.cnblogs.com/hnrainll/archive/2011/05/11/2043361.html
 
 	if (stat(filename, &f_stat) == -1) {
 		return 0;
 	}
 
-	return (long) f_stat.st_size;
+	return (long) f_stat.st_size;				// stat.st_size : 文件大小（字节）
 }
 
-void write_log(const char *fmt, ...) {
+void write_log(const char *fmt, ...) {			// 写入日志 ? 
 	va_list ap;
 	char buffer[4096];
 	//      time_t          t = time(NULL);
 	//int l;
-	sprintf(buffer, "%s/log/client.log", oj_home);
-	FILE *fp = fopen(buffer, "ae+");
-	if (fp == NULL) {
+	sprintf(buffer, "%s/log/client.log", oj_home);			// 生成日志文件名
+	FILE *fp = fopen(buffer, "ae+");						// 打开日志文件
+	if (fp == NULL) {			// 异常处理
 		fprintf(stderr, "openfile error!\n");
 		system("pwd");
 	}
 	va_start(ap, fmt);
 	//l = 
-	vsprintf(buffer, fmt, ap);
+	vsprintf(buffer, fmt, ap);	
 	fprintf(fp, "%s\n", buffer);
 	if (DEBUG)
 		printf("%s\n", buffer);
 	va_end(ap);
-	fclose(fp);
+	fclose(fp);		// 关闭文件
 
 }
-int execute_cmd(const char * fmt, ...) {
+int execute_cmd(const char * fmt, ...) {	// 执行相关命令
 	char cmd[BUFFER_SIZE];
-
+	
 	int ret = 0;
 	va_list ap;
-
+	
 	va_start(ap, fmt);
 	vsprintf(cmd, fmt, ap);
-	ret = system(cmd);
+	ret = system(cmd);			// 执行!
 	va_end(ap);
 	return ret;
 }
@@ -244,7 +244,7 @@ void init_syscalls_limits(int lang) {
 	}
 
 }
-
+// 获取等号的位置
 int after_equal(char * c) {
 	int i = 0;
 	for (; c[i] != '\0' && c[i] != '='; i++)
@@ -265,7 +265,7 @@ void trim(char * c) {
 	strcpy(c, start);
 }
 bool read_buf(char * buf, const char * key, char * value) {
-	if (strncmp(buf, key, strlen(key)) == 0) {
+	if (strncmp(buf, key, strlen(key)) == 0) {				// 如果参数1字符串等于参数2字符串，则将参数3字符串赋值为参数2		
 		strcpy(value, buf + after_equal(buf));
 		trim(value);
 		if (DEBUG)
@@ -280,7 +280,7 @@ void read_int(char * buf, const char * key, int * value) {
 		sscanf(buf2, "%d", value);
 
 }
-// read the configue file
+// read the configue file		crazy_mad注释：初始化数据库相关参数
 void init_mysql_conf() {
 	FILE *fp = NULL;
 	char buf[BUFFER_SIZE];
@@ -295,7 +295,7 @@ void init_mysql_conf() {
 	strcpy(java_xmx, "-Xmx256m");
 	sprintf(buf, "%s/etc/judge.conf", oj_home);
 	fp = fopen("./etc/judge.conf", "re");
-	if (fp != NULL) {
+	if (fp != NULL) {					// crazy_mad注释：读取配置文件并给相关字符串变量赋值
 		while (fgets(buf, BUFFER_SIZE - 1, fp)) {
 			read_buf(buf, "OJ_HOST_NAME", host_name);
 			read_buf(buf, "OJ_USER_NAME", user_name);
@@ -323,7 +323,7 @@ void init_mysql_conf() {
 //	fclose(fp);
 }
 
-int isInFile(const char fname[]) {
+int isInFile(const char fname[]) {							// crazy_mad注释：判断时候是以.in为扩展名结尾(测试数据)
 	int l = strlen(fname);
 	if (l <= 3 || strcmp(fname + l - 3, ".in") != 0)
 		return 0;
@@ -331,17 +331,17 @@ int isInFile(const char fname[]) {
 		return l - 3;
 }
 
-void find_next_nonspace(int & c1, int & c2, FILE *& f1, FILE *& f2, int & ret) {
-	// Find the next non-space character or \n.
+void find_next_nonspace(int & c1, int & c2, FILE *& f1, FILE *& f2, int & ret) {	
+	// Find the next non-space character or \n.				
 	while ((isspace(c1)) || (isspace(c2))) {
 		if (c1 != c2) {
-			if (c2 == EOF) {
-				do {
+			if (c2 == EOF) {				// 如果f2到了文件尾
+				do {						// 那么只需要循环判断f1
 					c1 = fgetc(f1);
 				} while (isspace(c1));
 				continue;
-			} else if (c1 == EOF) {
-				do {
+			} else if (c1 == EOF) {			// 如果f1到了文件尾
+				do {						// 那么只需要循环判断f2
 					c2 = fgetc(f2);
 				} while (isspace(c2));
 				continue;
@@ -385,6 +385,7 @@ void find_next_nonspace(int & c1, int & c2, FILE *& f1, FILE *& f2, int & ret) {
 
  }
  */
+// crazy_mad注释：判断字符串中下一个目录节点,并返回指针位置
 const char * getFileNameFromPath(const char * path) {
 	for (int i = strlen(path); i >= 0; i--) {
 		if (path[i] == '/')
@@ -392,7 +393,7 @@ const char * getFileNameFromPath(const char * path) {
 	}
 	return path;
 }
-
+// ?
 void make_diff_out_full(FILE *f1, FILE *f2, int c1, int c2, const char * path) {
 	
 	execute_cmd("echo '========[%s]========='>>diff.out",getFileNameFromPath(path));
@@ -407,6 +408,7 @@ void make_diff_out_full(FILE *f1, FILE *f2, int c1, int c2, const char * path) {
 	execute_cmd("echo '=============================='>>diff.out");
 
 }
+// ?
 void make_diff_out_simple(FILE *f1, FILE *f2, int c1, int c2, const char * path) {
 	execute_cmd("echo '========[%s]========='>>diff.out",getFileNameFromPath(path));
 	execute_cmd("echo '=======diff out 100 lines====='>>diff.out");
@@ -419,13 +421,14 @@ void make_diff_out_simple(FILE *f1, FILE *f2, int c1, int c2, const char * path)
  * http://code.google.com/p/zoj/source/browse/trunk/judge_client/client/text_checker.cc#25
  *
  */
+// crazy_mad注释：程序成功运行后判断是wa还是ac
 int compare_zoj(const char *file1, const char *file2) {
-	int ret = OJ_AC;
+	int ret = OJ_AC;				// 缺省值为 ACCECPT
 	int c1, c2;
 	FILE * f1, *f2;
 	f1 = fopen(file1, "re");
 	f2 = fopen(file2, "re");
-	if (!f1 || !f2) {
+	if (!f1 || !f2) {				// 文件打开异常
 		ret = OJ_RE;
 	} else
 		for (;;) {
@@ -479,7 +482,7 @@ int compare_zoj(const char *file1, const char *file2) {
 		fclose(f2);
 	return ret;
 }
-
+// 将换行转变成空格
 void delnextline(char s[]) {
 	int L;
 	L = strlen(s);
@@ -535,10 +538,10 @@ int compare(const char *file1, const char *file2) {
 #endif
 }
 
-FILE * read_cmd_output(const char * fmt, ...) {
+FILE * read_cmd_output(const char * fmt, ...) {				// 读取cmd执行命令输出结果
 	char cmd[BUFFER_SIZE];
 
-	FILE * ret = NULL;
+	FILE * ret = NULL;						// 文件流指针
 	va_list ap;
 
 	va_start(ap, fmt);
@@ -546,10 +549,11 @@ FILE * read_cmd_output(const char * fmt, ...) {
 	va_end(ap);
 	if (DEBUG)
 		printf("%s\n", cmd);
-	ret = popen(cmd, "r");
+	ret = popen(cmd, "r");					// 用创建管道的方式启动一个进程，并调用shell，将进程输出结果定向到ret中
 
 	return ret;
 }
+// ?
 bool check_login() {
 	const char * cmd =
 			" wget --post-data=\"checklogin=1\" --load-cookies=cookie --save-cookies=cookie --keep-session-cookies -q -O - \"%s/admin/problem_judge.php\"";
@@ -560,6 +564,7 @@ bool check_login() {
 
 	return ret;
 }
+// 模拟登录
 void login() {
 	if (!check_login()) {
 		const char * cmd =
@@ -571,7 +576,7 @@ void login() {
 	}
 
 }
-/* write result back to database */
+/* write result back to database */				// crazy_mad注释：将评测结果写入数据库中
 void _update_solution_mysql(int solution_id, int result, int time, int memory,
 		int sim, int sim_s_id, double pass_rate) {
 	char sql[BUFFER_SIZE];
@@ -600,6 +605,7 @@ void _update_solution_mysql(int solution_id, int result, int time, int memory,
 	}
 
 }
+// crazy_mad注释：通过http方式更新数据
 void _update_solution_http(int solution_id, int result, int time, int memory,
 		int sim, int sim_s_id, double pass_rate) {
 	const char * cmd =
@@ -613,7 +619,7 @@ void update_solution(int solution_id, int result, int time, int memory, int sim,
 		int sim_s_id, double pass_rate) {
 	if (result == OJ_TL && memory == 0)
 		result = OJ_ML;
-	if (http_judge) {
+	if (http_judge) {					// 判断是通过http方式更新还是通过轮询mysql的方式更新数据(默认是直接通过mysql更新数据)
 		_update_solution_http(solution_id, result, time, memory, sim, sim_s_id,
 				pass_rate);
 	} else {
@@ -622,12 +628,13 @@ void update_solution(int solution_id, int result, int time, int memory, int sim,
 	}
 }
 /* write compile error message back to database */
+// 将编译错误信息写入数据库
 void _addceinfo_mysql(int solution_id) {
 	char sql[(1 << 16)], *end;
 	char ceinfo[(1 << 16)], *cend;
 	FILE *fp = fopen("ce.txt", "re");
 	snprintf(sql, (1 << 16) - 1, "DELETE FROM compileinfo WHERE solution_id=%d",
-			solution_id);
+			solution_id);			// solution_id 位数被限制到2^15-1长度(十进制)
 	mysql_real_query(conn, sql, strlen(sql));
 	cend = ceinfo;
 	while (fgets(cend, 1024, fp)) {
@@ -655,14 +662,14 @@ void _addceinfo_mysql(int solution_id) {
 }
 // urlencoded function copied from http://www.geekhideout.com/urlcode.shtml
 /* Converts a hex character to its integer value */
-char from_hex(char ch) {
+char from_hex(char ch) {			// 十进制转换成十六进制
 	return isdigit(ch) ? ch - '0' : tolower(ch) - 'a' + 10;
 }
 
 /* Converts an integer value to its hex character*/
-char to_hex(char code) {
+char to_hex(char code) {			// 十进制转换成十六进制
 	static char hex[] = "0123456789abcdef";
-	return hex[code & 15];
+	return hex[code & 15];			// 通过位运算将小于16的数字转换成十六进制数字
 }
 
 /* Returns a url-encoded version of str */
@@ -671,7 +678,7 @@ char *url_encode(char *str) {
 	char *pstr = str, *buf = (char *) malloc(strlen(str) * 3 + 1), *pbuf = buf;
 	while (*pstr) {
 		if (isalnum(*pstr) || *pstr == '-' || *pstr == '_' || *pstr == '.'
-				|| *pstr == '~')
+				|| *pstr == '~')			// isalnum 函数用于判断字符是字母或者数字，是的话返回非零，否的话返回零
 			*pbuf++ = *pstr;
 		else if (*pstr == ' ')
 			*pbuf++ = '+';
@@ -683,7 +690,7 @@ char *url_encode(char *str) {
 	*pbuf = '\0';
 	return buf;
 }
-
+// 编译错误提交给web端
 void _addceinfo_http(int solution_id) {
 
 	char ceinfo[(1 << 16)], *cend;
@@ -710,6 +717,7 @@ void _addceinfo_http(int solution_id) {
 	pclose(fjobs);
 
 }
+// 编译错误的提交
 void addceinfo(int solution_id) {
 	if (http_judge) {
 		_addceinfo_http(solution_id);
@@ -717,7 +725,7 @@ void addceinfo(int solution_id) {
 		_addceinfo_mysql(solution_id);
 	}
 }
-/* write runtime error message back to database */
+/* write runtime error message back to database */				// 运行中发生错误 提交给数据库
 void _addreinfo_mysql(int solution_id, const char * filename) {
 	char sql[(1 << 16)], *end;
 	char reinfo[(1 << 16)], *rend;
@@ -749,7 +757,7 @@ void _addreinfo_mysql(int solution_id, const char * filename) {
 		printf("%s\n", mysql_error(conn));
 	fclose(fp);
 }
-
+// 运行中错误 提交给web端
 void _addreinfo_http(int solution_id, const char * filename) {
 
 	char reinfo[(1 << 16)], *rend;
@@ -776,7 +784,7 @@ void _addreinfo_http(int solution_id, const char * filename) {
 	pclose(fjobs);
 
 }
-void addreinfo(int solution_id) {
+void addreinfo(int solution_id) {			// 提交运行中错误
 	if (http_judge) {
 		_addreinfo_http(solution_id, "error.out");
 	} else {
@@ -834,20 +842,20 @@ void _update_problem_http(int pid) {
 	const char * cmd =
 			" wget --post-data=\"updateproblem=1&pid=%d\" --load-cookies=cookie --save-cookies=cookie --keep-session-cookies -q -O - \"%s/admin/problem_judge.php\"";
 	FILE * fjobs = read_cmd_output(cmd, pid, http_baseurl);
-	//fscanf(fjobs,"%d",&ret);
+	//fscanf(fjobs,"%d",&ret)			
 	pclose(fjobs);
 }
-void _update_problem_mysql(int p_id) {
+void _update_problem_mysql(int p_id) {				// 更新题目回答情况 
 	char sql[BUFFER_SIZE];
 	sprintf(sql,
 			"UPDATE `problem` SET `accepted`=(SELECT count(*) FROM `solution` WHERE `problem_id`=\'%d\' AND `result`=\'4\') WHERE `problem_id`=\'%d\'",
 			p_id, p_id);
-	if (mysql_real_query(conn, sql, strlen(sql)))
+	if (mysql_real_query(conn, sql, strlen(sql)))				// 更新提交正确的数量
 		write_log(mysql_error(conn));
 	sprintf(sql,
 			"UPDATE `problem` SET `submit`=(SELECT count(*) FROM `solution` WHERE `problem_id`=\'%d\') WHERE `problem_id`=\'%d\'",
 			p_id, p_id);
-	if (mysql_real_query(conn, sql, strlen(sql)))
+	if (mysql_real_query(conn, sql, strlen(sql)))				// 更新提交数量
 		write_log(mysql_error(conn));
 }
 void update_problem(int pid) {
@@ -902,7 +910,7 @@ int compile(int lang,char * work_dir) {
 	sprintf(CP_J[5], "Main.java");
 	CP_J[6] = (char *) NULL;
 
-	pid = fork();
+	pid = fork();			// 创建子进程
 	if (pid == 0) {
 		struct rlimit LIM;
 		LIM.rlim_max = 60;
@@ -2040,7 +2048,7 @@ void init_parameters(int argc, char ** argv, int & solution_id,
 	else
 		strcpy(oj_home, "/home/judge");
 
-	chdir(oj_home); // change the dir// init our work
+	chdir(oj_home); // change the dir// init our work	// 改变工作目录
 
 	solution_id = atoi(argv[1]);
 	runner_id = atoi(argv[2]);
@@ -2188,11 +2196,11 @@ int main(int argc, char** argv) {
 	int runner_id = 0;
 	int p_id, time_lmt, mem_lmt, lang, isspj, sim, sim_s_id, max_case_time = 0;
 
-	init_parameters(argc, argv, solution_id, runner_id);
+	init_parameters(argc, argv, solution_id, runner_id);		// 根据命令行参数初始化数据
 
-	init_mysql_conf();
+	init_mysql_conf();											// 这个函数和judged.cc里面的那个同名函数差不多		
 
-	if (!http_judge && !init_mysql_conn()) {
+	if (!http_judge && !init_mysql_conn()) {					// 如果不是通过http方式进行数据通信，且数据库连接异常
 		exit(0); //exit if mysql is down
 	}
 	//set work directory to start running & judging
