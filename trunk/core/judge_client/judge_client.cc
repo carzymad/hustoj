@@ -911,7 +911,7 @@ int compile(int lang,char * work_dir) {
 	CP_J[6] = (char *) NULL;
 
 	pid = fork();			// 创建子进程
-	if (pid == 0) {
+	if (pid == 0) {			// 子进程内容 对于子进程来说，fork的返回值是0，父进程的fork返回值是子进程的id
 		struct rlimit LIM;
 		LIM.rlim_max = 60;
 		LIM.rlim_cur = 60;
@@ -953,6 +953,7 @@ int compile(int lang,char * work_dir) {
                 while(setuid(1536)!=0) sleep(1);
                 while(setresuid(1536, 1536, 1536)!=0) sleep(1);
 
+// execvp()会从PATH 环境变量所指的目录中查找符合参数file 的文件名, 找到后便执行该文件, 然后将第二个参数argv传给该欲执行的文件。
 		switch (lang) {
 		case 0:
 			execvp(CP_C[0], (char * const *) CP_C);
@@ -1166,7 +1167,7 @@ void get_custominput(int solution_id, char * work_dir) {
 		_get_custominput_mysql(solution_id, work_dir);
 	}
 }
-
+// solution_id:提交列表中的编号 p_id:题目编号 user_id:提交用户的id lang:评测语言
 void _get_solution_info_mysql(int solution_id, int & p_id, char * user_id,
 		int & lang) {
 
@@ -2017,7 +2018,7 @@ void umount(char * work_dir){
         execute_cmd("/bin/umount %s/*",work_dir);
 }
 void clean_workdir(char * work_dir) {
-	umount(work_dir);
+	umount(work_dir);				// 如果工作目录已经存在，则先卸载该工作目录
  	if (DEBUG) {
 		execute_cmd("mkdir %s/log/", work_dir);
 		execute_cmd("/bin/mv %s/* %s/log/", work_dir, work_dir);
@@ -2051,7 +2052,7 @@ void init_parameters(int argc, char ** argv, int & solution_id,
 	chdir(oj_home); // change the dir// init our work	// 改变工作目录
 
 	solution_id = atoi(argv[1]);
-	runner_id = atoi(argv[2]);
+	runner_id = atoi(argv[2]);							// 父进程中ID列表的编号
 }
 int get_sim(int solution_id, int lang, int pid, int &sim_s_id) {
 	char src_pth[BUFFER_SIZE];
@@ -2088,7 +2089,11 @@ int get_sim(int solution_id, int lang, int pid, int &sim_s_id) {
 		sim = 0;
 	return sim;
 }
-void mk_shm_workdir(char * work_dir) {
+/*
+ * /dev/shm 目录是挂载在内存上的空间，所以读取速度非常快
+ * 这个函数就是在 /dev/shm 目录下面开辟一个目录
+ */
+void mk_shm_workdir(char * work_dir) {						
 	char shm_path[BUFFER_SIZE];
 	sprintf(shm_path, "/dev/shm/hustoj/%s", work_dir);
 	execute_cmd("/bin/mkdir -p %s", shm_path);
@@ -2187,6 +2192,9 @@ void print_call_array() {
 	printf("0};\n");
 
 }
+/*
+ * argv[1]:solution_id, argv[2]:ID[index], argv[3]:oj_home
+ */
 int main(int argc, char** argv) {
 
 	char work_dir[BUFFER_SIZE];
@@ -2204,17 +2212,26 @@ int main(int argc, char** argv) {
 		exit(0); //exit if mysql is down
 	}
 	//set work directory to start running & judging
-	sprintf(work_dir, "%s/run%s/", oj_home, argv[2]);
+	sprintf(work_dir, "%s/run%s/", oj_home, argv[2]);			// 
+	
+	/* 文件目录树状图表示
+	 *	/home
+	 *	└───.hustoj
+	 *		├───.run1		====> 这种文件就是work_dir
+	 *		├───.run2
+	 *		├───.run3
+	 *		└───.runx
+	 */
 
 	clean_workdir(work_dir);
-	if (shm_run)
-		mk_shm_workdir(work_dir);
+	if (shm_run)												// 该项目中shm_run默认是1
+		mk_shm_workdir(work_dir);								// 创建工作目录
 
-	chdir(work_dir);
+	chdir(work_dir);											// 进入工作目录 /home/hustoj/runX
 	
 	if (http_judge)
 		system("/bin/ln -s ../cookie ./");
-	get_solution_info(solution_id, p_id, user_id, lang);
+	get_solution_info(solution_id, p_id, user_id, lang);		// 获取本次评测的提交信息
 	//get the limit
 
 	if (p_id == 0) {
@@ -2222,11 +2239,11 @@ int main(int argc, char** argv) {
 		mem_lmt = 128;
 		isspj = 0;
 	} else {
-		get_problem_info(p_id, time_lmt, mem_lmt, isspj);
+		get_problem_info(p_id, time_lmt, mem_lmt, isspj);		// 获取题目信息：时间限制、内存限制、????
 	}
 	//copy source file
 
-	get_solution(solution_id, work_dir, lang);
+	get_solution(solution_id, work_dir, lang);					// 打开用户提交的代码文本文件
 
 	//java is lucky
 	if (lang >= 3 && lang != 10 && lang != 13 && lang != 14) {  // Clang Clang++ not VM or Script
@@ -2236,7 +2253,6 @@ int main(int argc, char** argv) {
 		// copy java.policy
 		execute_cmd("/bin/cp %s/etc/java0.policy %s/java.policy", oj_home,
 				work_dir);
-
 	}
 
 	//never bigger than judged set value;
@@ -2254,7 +2270,7 @@ int main(int argc, char** argv) {
 	int Compile_OK;
 
 	Compile_OK = compile(lang,work_dir);
-	if (Compile_OK != 0) {
+	if (Compile_OK != 0) {										// 如果评测结果正确
 		addceinfo(solution_id);
 		update_solution(solution_id, OJ_CE, 0, 0, 0, 0, 0.0);
 		update_user(user_id);

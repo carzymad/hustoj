@@ -198,7 +198,10 @@ void init_mysql_conf() {					// 读取配置文件
 		//	fclose(fp);
 	}
 }
-
+/*
+ *	runid 是 solution_id
+ *	client_id 是 ID列表中当前分配到的index下标
+ */
 void run_client(int runid, int clientid) {
 	char buf[BUFFER_SIZE], runidstr[BUFFER_SIZE];
 	struct rlimit LIM;
