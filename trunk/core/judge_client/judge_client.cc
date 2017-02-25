@@ -2376,11 +2376,7 @@ int main(int argc, char** argv) {
 		if (namelen == 0)				  // 读取到的文件不是输入数据文件的话
 			continue;
 
-<<<<<<< HEAD
-		if(http_judge&&(!data_list_has(dirp->d_name)))
-=======
 		if(http_judge&&(!data_list_has(dirp->d_name))) 	// 判断文件列表是否有本次读取到的文件
->>>>>>> d854e093f64415ae902d4886b2de207f5e186033
 			continue;
 
 		prepare_files(dirp->d_name, namelen, infile, p_id, work_dir, outfile,
