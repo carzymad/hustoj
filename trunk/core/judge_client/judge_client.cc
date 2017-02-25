@@ -911,15 +911,15 @@ int compile(int lang,char * work_dir) {
 	CP_J[6] = (char *) NULL;
 
 	pid = fork();			// 创建子进程
-	if (pid == 0) {			// 子进程内容 对于子进程来说，fork的返回值是0，父进程的fork返回值是子进程的id
+	if (pid == 0) {			// 子进程内容 对于子进程来说，fork()的返回值是0，父进程的fork()返回值是子进程的id
 		struct rlimit LIM;
-		LIM.rlim_max = 60;
-		LIM.rlim_cur = 60;
-		setrlimit(RLIMIT_CPU, &LIM);
+		LIM.rlim_max = 60;					// 资源限制值
+		LIM.rlim_cur = 60;					// 资源限制值的最大值
+		setrlimit(RLIMIT_CPU, &LIM);		// 最大允许的CPU使用时间，即所谓的运行时间
 		alarm(60);
-		LIM.rlim_max = 10 * STD_MB;
+		LIM.rlim_max = 10 * STD_MB;				
 		LIM.rlim_cur = 10 * STD_MB;
-		setrlimit(RLIMIT_FSIZE, &LIM);
+		setrlimit(RLIMIT_FSIZE, &LIM);		// 可以创建的文件的最大字节长度
 
 		if(lang==3||lang==17){
 		   LIM.rlim_max = STD_MB <<11;
@@ -928,8 +928,8 @@ int compile(int lang,char * work_dir) {
 		   LIM.rlim_max = STD_MB *256 ;
 		   LIM.rlim_cur = STD_MB *256 ;
 		}
-		setrlimit(RLIMIT_AS, &LIM);
-		if (lang != 2 && lang != 11) {
+		setrlimit(RLIMIT_AS, &LIM);			// 进程可用储存区的最大总长度（字节）内存限制
+		if (lang != 2 && lang != 11) {		// 打开(创建)输出编译错误的文件,如果编译出错，则输出到ce.txt文件中
 			freopen("ce.txt", "w", stderr);
 			//freopen("/dev/null", "w", stdout);
 		} else {
@@ -953,58 +953,58 @@ int compile(int lang,char * work_dir) {
                 while(setuid(1536)!=0) sleep(1);
                 while(setresuid(1536, 1536, 1536)!=0) sleep(1);
 
-// execvp()会从PATH 环境变量所指的目录中查找符合参数file 的文件名, 找到后便执行该文件, 然后将第二个参数argv传给该欲执行的文件。
-		switch (lang) {
-		case 0:
+// execvp()会从PATH 环境变量所指的目录中查找符合参数 file 的文件名, 找到后便执行该文件, 然后将第二个参数argv传给该欲执行的文件。
+		switch (lang) {			// 根据不同的语言类型，执行不同的命令
+		case 0:		// GCC
 			execvp(CP_C[0], (char * const *) CP_C);
 			break;
-		case 1:
+		case 1:		// G++
 			execvp(CP_X[0], (char * const *) CP_X);
 			break;
-		case 2:
+		case 2:		// pascal
 			execvp(CP_P[0], (char * const *) CP_P);
 			break;
-		case 3:
+		case 3:		// java
 			execvp(CP_J[0], (char * const *) CP_J);
 			break;
-		case 4:
+		case 4:		// ruby
 			execvp(CP_R[0], (char * const *) CP_R);
 			break;
-		case 5:
+		case 5:		// shell
 			execvp(CP_B[0], (char * const *) CP_B);
 			break;
 		//case 6:
 		//	execvp(CP_Y[0], (char * const *) CP_Y);
 		//	break;
-		case 7:
+		case 7:		// php
 			execvp(CP_PH[0], (char * const *) CP_PH);
 			break;
-		case 8:
+		case 8:		// Perl
 			execvp(CP_PL[0], (char * const *) CP_PL);
 			break;
-		case 9:
+		case 9:		// C#
 			execvp(CP_CS[0], (char * const *) CP_CS);
 			break;
 
-		case 10:
+		case 10:	// 
 			execvp(CP_OC[0], (char * const *) CP_OC);
 			break;
-		case 11:
+		case 11:	// 
 			execvp(CP_BS[0], (char * const *) CP_BS);
 			break;
-		case 13:
+		case 13:	// Clang for C
 			execvp(CP_CLANG[0], (char * const *) CP_CLANG);
 			break;
-		case 14:
+		case 14:	// Clang for C++
 			execvp(CP_CLANG_CPP[0], (char * const *) CP_CLANG_CPP);
 			break;
-		case 15:
+		case 15:	// lua
 			execvp(CP_LUA[0], (char * const *) CP_LUA);
 			break;
 		//case 16:
 		//	execvp(CP_JS[0], (char * const *) CP_JS);
 		//	break;
-		case 17:
+		case 17:	// GO
 			execvp(CP_GO[0], (char * const *) CP_GO);
 			break;
 		default:
@@ -1014,12 +1014,12 @@ int compile(int lang,char * work_dir) {
 			printf("compile end!\n");
 		//exit(!system("cat ce.txt"));
 		exit(0);
-	} else {
+	} else {	// 父进程内容，判断编译是否成功
 		int status = 0;
 
-		waitpid(pid, &status, 0);
+		waitpid(pid, &status, 0);		// 等待刚才创建的子进程运行结束
 		if (lang > 3 && lang < 7)
-			status = get_file_size("ce.txt");
+			status = get_file_size("ce.txt");	// 如果ce.txt 文件里面有内容，那么说明编译出错
 		if (DEBUG)
 			printf("status=%d\n", status);
 		execute_cmd("/bin/umount bin usr lib lib64 etc/alternatives proc dev");
@@ -1059,7 +1059,7 @@ int get_proc_status(int pid, const char * mark) {
 		fclose(pf);
 	return ret;
 }
-int init_mysql_conn() {
+int init_mysql_conn() {					// 连接数据库
 
 	conn = mysql_init(NULL);
 	//mysql_real_connect(conn,host_name,user_name,password,db_name,port_number,0,0);
@@ -1090,10 +1090,10 @@ void _get_solution_mysql(int solution_id, char * work_dir, int lang) {
 	row = mysql_fetch_row(res);
 
 	// create the src file
-	sprintf(src_pth, "Main.%s", lang_ext[lang]);
+	sprintf(src_pth, "Main.%s", lang_ext[lang]);	// 根据用户提交时选择的语言类型生成相应源代码文件
 	if (DEBUG)
 		printf("Main=%s", src_pth);
-	FILE *fp_src = fopen(src_pth, "we");
+	FILE *fp_src = fopen(src_pth, "we");			// 创建代码文件
 	fprintf(fp_src, "%s", row[0]);
 	mysql_free_result(res);
 	fclose(fp_src);
@@ -2121,10 +2121,11 @@ int get_test_file(char* work_dir, int p_id) {
 	int ret = 0;
 	const char * cmd =
 			" wget --post-data=\"gettestdatalist=1&pid=%d\" --load-cookies=cookie --save-cookies=cookie --keep-session-cookies -q -O - \"%s/admin/problem_judge.php\"";
-	FILE * fjobs = read_cmd_output(cmd, p_id, http_baseurl);
+	// 通过POST的方式向web传输请求，然后相应的php页面会echo相应返回值
+	FILE * fjobs = read_cmd_output(cmd, p_id, http_baseurl);		
 	while (fgets(filename, BUFFER_SIZE - 1, fjobs) != NULL) {
 		sscanf(filename, "%s", filename);
-		if(http_judge&&(!data_list_has(filename))) data_list_add(filename);
+		if(http_judge&&(!data_list_has(filename))) data_list_add(filename);	// 忍不住吐槽一下，代码风格总是突变，感觉不是一个人写的
 		sprintf(localfile, "%s/data/%d/%s", oj_home, p_id, filename);
 		if (DEBUG)
 			printf("localfile[%s]\n", localfile);
@@ -2133,7 +2134,7 @@ int get_test_file(char* work_dir, int p_id) {
 				" wget --post-data=\"gettestdatadate=1&filename=%d/%s\" --load-cookies=cookie --save-cookies=cookie --keep-session-cookies -q -O -  \"%s/admin/problem_judge.php\"";
 		FILE * rcop = read_cmd_output(check_file_cmd, p_id, filename,
 				http_baseurl);
-		time_t remote_date, local_date;
+		time_t remote_date, local_date;			// sizeof(time_t) == 32
 		fscanf(rcop, "%ld", &remote_date);
 		fclose(rcop);
 		struct stat fst;
@@ -2215,12 +2216,12 @@ int main(int argc, char** argv) {
 	sprintf(work_dir, "%s/run%s/", oj_home, argv[2]);			// 
 	
 	/* 文件目录树状图表示
-	 *	/home
-	 *	└───.hustoj
-	 *		├───.run1		====> 这种文件就是work_dir
-	 *		├───.run2
-	 *		├───.run3
-	 *		└───.runx
+	 *  /home
+	 *  └───.hustoj
+	 *      ├───.run1		====> 这种文件就是work_dir
+	 *      ├───.run2
+	 *      ├───.run3
+	 *      └───.runx
 	 */
 
 	clean_workdir(work_dir);
@@ -2243,16 +2244,16 @@ int main(int argc, char** argv) {
 	}
 	//copy source file
 
-	get_solution(solution_id, work_dir, lang);					// 打开用户提交的代码文本文件
+	get_solution(solution_id, work_dir, lang);					// 根据获取到的信息生成源代码文件
 
-	//java is lucky
+	//java is lucky			
 	if (lang >= 3 && lang != 10 && lang != 13 && lang != 14) {  // Clang Clang++ not VM or Script
 		// the limit for java
 		time_lmt = time_lmt + java_time_bonus;
 		mem_lmt = mem_lmt + java_memory_bonus;
 		// copy java.policy
 		execute_cmd("/bin/cp %s/etc/java0.policy %s/java.policy", oj_home,
-				work_dir);
+				work_dir);				// 将JAVA的权限文件复制到工作目录下
 	}
 
 	//never bigger than judged set value;
@@ -2270,7 +2271,7 @@ int main(int argc, char** argv) {
 	int Compile_OK;
 
 	Compile_OK = compile(lang,work_dir);
-	if (Compile_OK != 0) {										// 如果评测结果正确
+	if (Compile_OK != 0) {										// 如果编译错误
 		addceinfo(solution_id);
 		update_solution(solution_id, OJ_CE, 0, 0, 0, 0, 0.0);
 		update_user(user_id);
@@ -2280,8 +2281,8 @@ int main(int argc, char** argv) {
 		clean_workdir(work_dir);
 		write_log("compile error");
 		exit(0);
-	} else {
-		update_solution(solution_id, OJ_RI, 0, 0, 0, 0, 0.0);
+	} else {	
+		update_solution(solution_id, OJ_RI, 0, 0, 0, 0, 0.0);	// 告诉web端编译成功，正在运行中
 		umount(work_dir);
 	}
 	//exit(0);
@@ -2289,31 +2290,30 @@ int main(int argc, char** argv) {
 	char fullpath[BUFFER_SIZE];
 	char infile[BUFFER_SIZE];
 	char outfile[BUFFER_SIZE];
-	char userfile[BUFFER_SIZE];
-	sprintf(fullpath, "%s/data/%d", oj_home, p_id); // the fullpath of data dir
+	char userfile[BUFFER_SIZE];						// 用户的源码运行后输出的数据
+	sprintf(fullpath, "%s/data/%d", oj_home, p_id); // the fullpath of data dir	// 生成测试数据目录
 
 	// open DIRs
-	DIR *dp;
+	DIR *dp;						
 	dirent *dirp;
 	// using http to get remote test data files
 	if (p_id > 0 && http_judge)
-		get_test_file(work_dir, p_id);
+		get_test_file(work_dir, p_id);				// 获取测试数据文件的文件名字列表 并生成测试数据文件
 	if (p_id > 0 && (dp = opendir(fullpath)) == NULL) {
-
 		write_log("No such dir:%s!\n", fullpath);
 		if (!http_judge)
 			mysql_close(conn);
 		exit(-1);
 	}
-
-	int ACflg, PEflg;
+	// 接下来就是运行可执行文件了
+	int ACflg, PEflg;				
 	ACflg = PEflg = OJ_AC;
 	int namelen;
-	int usedtime = 0, topmemory = 0;
+	int usedtime = 0, topmemory = 0;		// 运行耗时，所用内存
 
-	//create chroot for ruby bash python
+	//create chroot for ruby bash python	// 以下都是脚本语言 下面只是配置运行环境，不是运行，不要搞错
 	if (lang == 4)
-		copy_ruby_runtime(work_dir);
+		copy_ruby_runtime(work_dir);		// 将ruby所需的运行环境复制过来，下来几个函数类同
 	if (lang == 5)
 		copy_bash_runtime(work_dir);
 	if (lang == 6)
@@ -2337,22 +2337,21 @@ int main(int argc, char** argv) {
 	// read files and run
 	// read files and run
 	// read files and run
-	double pass_rate = 0.0;
-	int num_of_test = 0;
+	double pass_rate = 0.0;						// 题目通过率
+	int num_of_test = 0;						// 通过了多少测试数据文件
 	int finalACflg = ACflg;
-	if (p_id == 0) {  //custom input running
-		printf("running a custom input...\n");
-		get_custominput(solution_id, work_dir);
+	if (p_id == 0) {  //custom input running	// 测试用题号
+		printf("running a custom input...\n");					
+		get_custominput(solution_id, work_dir);	
 		init_syscalls_limits(lang);
 		pid_t pidApp = fork();
 
-		if (pidApp == 0) {
+		if (pidApp == 0) {						// 进程子进程
 			run_solution(lang, work_dir, time_lmt, usedtime, mem_lmt);
-		} else {
+		} else {								// 父进程
 			watch_solution(pidApp, infile, ACflg, isspj, userfile, outfile,
 					solution_id, lang, topmemory, mem_lmt, usedtime, time_lmt,
 					p_id, PEflg, work_dir);
-
 		}
 		if (ACflg == OJ_TL) {
 			usedtime = time_lmt * 1000;
@@ -2368,14 +2367,15 @@ int main(int argc, char** argv) {
 		clean_workdir(work_dir);
 		exit(0);
 	}
-
+	
+	// dirp=readdir(dp)这里的意思是只要还有测试文件可以读取，就继续judge
 	for (; (oi_mode || ACflg == OJ_AC|| ACflg == OJ_PE) && (dirp = readdir(dp)) != NULL;) {
 
 		namelen = isInFile(dirp->d_name); // check if the file is *.in or not
-		if (namelen == 0)
+		if (namelen == 0)				  // 读取到的文件不是输入数据文件的话
 			continue;
 
-		if(http_judge&&(!data_list_has(dirp->d_name))) 
+		if(http_judge&&(!data_list_has(dirp->d_name))) 	// 判断文件列表是否有本次读取到的文件
 			continue;
 	
 		prepare_files(dirp->d_name, namelen, infile, p_id, work_dir, outfile,
