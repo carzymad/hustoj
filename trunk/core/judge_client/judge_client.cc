@@ -119,9 +119,10 @@ static int use_ptrace = 1;
 //static int sleep_tmp;
 #define ZOJ_COM
 MYSQL *conn;				// 连接mysql
-
+							//   0    1     2       3      4     5     6
 static char lang_ext[18][8] = { "c", "cc", "pas", "java", "rb", "sh", "py",
-		"php", "pl", "cs", "m", "bas", "scm","c","cc","lua","js","go" };
+"php", "pl", "cs", "m", "bas", "scm","c","cc","lua","js","go" };
+//7     8     9    10   11      12   13  14    15   16   17
 //static char buf[BUFFER_SIZE];
 int data_list_has(char * file){
    for (int i=0; i<data_list_len; i++) {
@@ -149,7 +150,7 @@ long get_file_size(const char * filename) {
 	return (long) f_stat.st_size;				// stat.st_size : 文件大小（字节）
 }
 
-void write_log(const char *fmt, ...) {			// 写入日志 ? 
+void write_log(const char *fmt, ...) {			// 写入日志 ?
 	va_list ap;
 	char buffer[4096];
 	//      time_t          t = time(NULL);
@@ -161,8 +162,8 @@ void write_log(const char *fmt, ...) {			// 写入日志 ?
 		system("pwd");
 	}
 	va_start(ap, fmt);
-	//l = 
-	vsprintf(buffer, fmt, ap);	
+	//l =
+	vsprintf(buffer, fmt, ap);
 	fprintf(fp, "%s\n", buffer);
 	if (DEBUG)
 		printf("%s\n", buffer);
@@ -172,10 +173,10 @@ void write_log(const char *fmt, ...) {			// 写入日志 ?
 }
 int execute_cmd(const char * fmt, ...) {	// 执行相关命令
 	char cmd[BUFFER_SIZE];
-	
+
 	int ret = 0;
 	va_list ap;
-	
+
 	va_start(ap, fmt);
 	vsprintf(cmd, fmt, ap);
 	ret = system(cmd);			// 执行!
@@ -265,7 +266,7 @@ void trim(char * c) {
 	strcpy(c, start);
 }
 bool read_buf(char * buf, const char * key, char * value) {
-	if (strncmp(buf, key, strlen(key)) == 0) {				// 如果参数1字符串等于参数2字符串，则将参数3字符串赋值为参数2		
+	if (strncmp(buf, key, strlen(key)) == 0) {				// 如果参数1字符串等于参数2字符串，则将参数3字符串赋值为参数2
 		strcpy(value, buf + after_equal(buf));
 		trim(value);
 		if (DEBUG)
@@ -331,8 +332,8 @@ int isInFile(const char fname[]) {							// crazy_mad注释：判断时候是以
 		return l - 3;
 }
 
-void find_next_nonspace(int & c1, int & c2, FILE *& f1, FILE *& f2, int & ret) {	
-	// Find the next non-space character or \n.				
+void find_next_nonspace(int & c1, int & c2, FILE *& f1, FILE *& f2, int & ret) {
+	// Find the next non-space character or \n.
 	while ((isspace(c1)) || (isspace(c2))) {
 		if (c1 != c2) {
 			if (c2 == EOF) {				// 如果f2到了文件尾
@@ -349,12 +350,12 @@ void find_next_nonspace(int & c1, int & c2, FILE *& f1, FILE *& f2, int & ret) {
 			} else if (isspace(c1) && isspace(c2)) {
                                   while(c2=='\n'&&isspace(c1)&&c1!='\n') c1 = fgetc(f1);
                                   while(c1=='\n'&&isspace(c2)&&c2!='\n') c2 = fgetc(f2);
-	
+
 #else
 			} else if ((c1 == '\r' && c2 == '\n')) {
 				c1 = fgetc(f1);
 			} else if ((c2 == '\r' && c1 == '\n')) {
-				c2 = fgetc(f2);			
+				c2 = fgetc(f2);
 #endif
 			} else {
 				if (DEBUG)
@@ -395,7 +396,7 @@ const char * getFileNameFromPath(const char * path) {
 }
 // ?
 void make_diff_out_full(FILE *f1, FILE *f2, int c1, int c2, const char * path) {
-	
+
 	execute_cmd("echo '========[%s]========='>>diff.out",getFileNameFromPath(path));
 	execute_cmd("echo '------test in top 100 lines------'>>diff.out");
 	execute_cmd("head -100 data.in>>diff.out");
@@ -469,7 +470,7 @@ int compare_zoj(const char *file1, const char *file2) {
 				}
 			}
 		}
-	end: 
+	end:
 	if (ret == OJ_WA||ret==OJ_PE){
 		if(full_diff)
 			make_diff_out_full(f1, f2, c1, c2, file1);
@@ -842,10 +843,10 @@ void _update_problem_http(int pid) {
 	const char * cmd =
 			" wget --post-data=\"updateproblem=1&pid=%d\" --load-cookies=cookie --save-cookies=cookie --keep-session-cookies -q -O - \"%s/admin/problem_judge.php\"";
 	FILE * fjobs = read_cmd_output(cmd, pid, http_baseurl);
-	//fscanf(fjobs,"%d",&ret)			
+	//fscanf(fjobs,"%d",&ret)
 	pclose(fjobs);
 }
-void _update_problem_mysql(int p_id) {				// 更新题目回答情况 
+void _update_problem_mysql(int p_id) {				// 更新题目回答情况
 	char sql[BUFFER_SIZE];
 	sprintf(sql,
 			"UPDATE `problem` SET `accepted`=(SELECT count(*) FROM `solution` WHERE `problem_id`=\'%d\' AND `result`=\'4\') WHERE `problem_id`=\'%d\'",
@@ -923,7 +924,7 @@ int compile(int lang,char * work_dir) {
 
 		if(lang==3||lang==17){
 		   LIM.rlim_max = STD_MB <<11;
-		   LIM.rlim_cur = STD_MB <<11;	
+		   LIM.rlim_cur = STD_MB <<11;
                 }else{
 		   LIM.rlim_max = STD_MB *256 ;
 		   LIM.rlim_cur = STD_MB *256 ;
@@ -1024,7 +1025,7 @@ int compile(int lang,char * work_dir) {
 			printf("status=%d\n", status);
 		execute_cmd("/bin/umount bin usr lib lib64 etc/alternatives proc dev");
  		execute_cmd("/bin/umount %s/*",work_dir);
- 
+
 		return status;
 	}
 
@@ -1251,7 +1252,7 @@ void get_problem_info(int p_id, int & time_lmt, int & mem_lmt, int & isspj) {
 		_get_problem_info_mysql(p_id, time_lmt, mem_lmt, isspj);
 	}
 	if(time_lmt<=0) time_lmt=1;
-	
+
 }
 
 void prepare_files(char * filename, int namelen, char * infile, int & p_id,
@@ -1592,7 +1593,7 @@ void run_solution(int & lang, char * work_dir, int & time_lmt, int & usedtime,
 	setrlimit(RLIMIT_FSIZE, &LIM);
 	// proc limit
 	switch (lang) {
-	case 17:  
+	case 17:
 		LIM.rlim_cur = LIM.rlim_max = 280;
 		break;
 	case 3:  //java
@@ -1857,7 +1858,7 @@ void watch_solution(pid_t pidApp, char * infile, int & ACflg, int isspj,
 	int status, sig, exitcode;
 	struct user_regs_struct reg;
 	struct rusage ruse;
-	if(topmemory==0) 
+	if(topmemory==0)
 			topmemory= get_proc_status(pidApp, "VmRSS:") << 10;
 	while (1) {
 		// check the usage
@@ -1937,7 +1938,7 @@ void watch_solution(pid_t pidApp, char * infile, int & ACflg, int isspj,
 		if (WIFSIGNALED(status)) {
 			/*  WIFSIGNALED: if the process is terminated by signal
 			 *
-			 *  psignal(int sig, char *s)，like perror(char *s)，print out s, with error msg from system of sig  
+			 *  psignal(int sig, char *s)，like perror(char *s)，print out s, with error msg from system of sig
 			 * sig = 5 means Trace/breakpoint trap
 			 * sig = 11 means Segmentation fault
 			 * sig = 25 means File size limit exceeded
@@ -1980,7 +1981,7 @@ void watch_solution(pid_t pidApp, char * infile, int & ACflg, int isspj,
 			//call_counter[reg.REG_SYSCALL]--;
 		}else if (record_call) {
 			call_counter[reg.REG_SYSCALL] = 1;
-		
+
 		}else { //do not limit JVM syscall for using different JVM
 			ACflg = OJ_RE;
 			char error[BUFFER_SIZE];
@@ -1991,18 +1992,18 @@ void watch_solution(pid_t pidApp, char * infile, int & ACflg, int isspj,
                                         "if you are admin and you don't know what to do ,\n"
                                         " tech support can be found on http://hustoj.taobao.com\n",
                                         solution_id, (long)reg.REG_SYSCALL);
- 
+
 			write_log(error);
 			print_runtimeerror(error);
 			ptrace(PTRACE_KILL, pidApp, NULL, NULL);
 		}
-		
+
 
 		ptrace(PTRACE_SYSCALL, pidApp, NULL, NULL);
 	}
 	usedtime += (ruse.ru_utime.tv_sec * 1000 + ruse.ru_utime.tv_usec / 1000);
 	usedtime += (ruse.ru_stime.tv_sec * 1000 + ruse.ru_stime.tv_usec / 1000);
-	
+
 	//clean_session(pidApp);
 }
 void umount(char * work_dir){
@@ -2093,7 +2094,7 @@ int get_sim(int solution_id, int lang, int pid, int &sim_s_id) {
  * /dev/shm 目录是挂载在内存上的空间，所以读取速度非常快
  * 这个函数就是在 /dev/shm 目录下面开辟一个目录
  */
-void mk_shm_workdir(char * work_dir) {						
+void mk_shm_workdir(char * work_dir) {
 	char shm_path[BUFFER_SIZE];
 	sprintf(shm_path, "/dev/shm/hustoj/%s", work_dir);
 	execute_cmd("/bin/mkdir -p %s", shm_path);
@@ -2156,7 +2157,7 @@ int get_test_file(char* work_dir, int p_id) {
 					const char * cmd3 = "gcc -o %s/data/%d/spj %s/data/%d/spj.c";
 					execute_cmd(cmd3, oj_home, p_id, oj_home, p_id);
 				}
-
+                
 			}
 			if (strcmp(filename, "spj.cc") == 0) {
 				//     sprintf(localfile,"%s/data/%d/spj.cc",oj_home,p_id);
@@ -2206,14 +2207,14 @@ int main(int argc, char** argv) {
 
 	init_parameters(argc, argv, solution_id, runner_id);		// 根据命令行参数初始化数据
 
-	init_mysql_conf();											// 这个函数和judged.cc里面的那个同名函数差不多		
+	init_mysql_conf();											// 这个函数和judged.cc里面的那个同名函数差不多
 
 	if (!http_judge && !init_mysql_conn()) {					// 如果不是通过http方式进行数据通信，且数据库连接异常
 		exit(0); //exit if mysql is down
 	}
 	//set work directory to start running & judging
-	sprintf(work_dir, "%s/run%s/", oj_home, argv[2]);			// 
-	
+	sprintf(work_dir, "%s/run%s/", oj_home, argv[2]);			//
+
 	/* 文件目录树状图表示
 	 *	/home
 	 *	└───.hustoj
@@ -2228,7 +2229,7 @@ int main(int argc, char** argv) {
 		mk_shm_workdir(work_dir);								// 创建工作目录
 
 	chdir(work_dir);											// 进入工作目录 /home/hustoj/runX
-	
+
 	if (http_judge)
 		system("/bin/ln -s ../cookie ./");
 	get_solution_info(solution_id, p_id, user_id, lang);		// 获取本次评测的提交信息
@@ -2375,9 +2376,9 @@ int main(int argc, char** argv) {
 		if (namelen == 0)
 			continue;
 
-		if(http_judge&&(!data_list_has(dirp->d_name))) 
+		if(http_judge&&(!data_list_has(dirp->d_name)))
 			continue;
-	
+
 		prepare_files(dirp->d_name, namelen, infile, p_id, work_dir, outfile,
 				userfile, runner_id);
 		init_syscalls_limits(lang);
