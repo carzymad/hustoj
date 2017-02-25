@@ -57,3 +57,7 @@ Linux新手请看[鸟哥的私房菜](http://cn.linux.vbird.org/linux_basic/linu
 ## crazy_mad 声明
 
 这个fork版本主要是为了学习hustoj的源代码，我主要是在里面加上注释和自己的理解
+
+## 流程图演示
+<div style="float:left"><img src="https://github.com/carzymad/images/blob/master/HUSTOJ.png"></div>
+<div style="float:left"><img src="https://github.com/carzymad/images/blob/master/HUSTOJ-judge_client.png"></div>
