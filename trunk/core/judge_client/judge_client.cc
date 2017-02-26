@@ -125,20 +125,20 @@ static char lang_ext[18][8] = { "c", "cc", "pas", "java", "rb", "sh", "py",
 //7     8     9    10   11      12   13  14    15   16   17
 //static char buf[BUFFER_SIZE];
 int data_list_has(char * file){
-   for (int i=0; i<data_list_len; i++) {
-       if (strcmp(data_list[i],file) == 0)
+    for (int i=0; i<data_list_len; i++) {
+        if (strcmp(data_list[i],file) == 0)
 		return 1;
-   }
+    }
    return 0;
 }
 int data_list_add(char * file){
-   if(data_list_len<BUFFER_SIZE-1){				// BUFFER_SIZE 印象中难道不是buf的长度。。。？
-	strcpy(data_list[data_list_len],file);
-	data_list_len++;
-   	return 0;
-   }else{
-	return 1;
-   }
+    if(data_list_len<BUFFER_SIZE-1){				// BUFFER_SIZE 印象中难道不是buf的长度。。。？
+        strcpy(data_list[data_list_len],file);
+        data_list_len++;
+   	    return 0;
+    } else {
+	    return 1;
+    }
 }
 long get_file_size(const char * filename) {
 	struct stat f_stat;							// 获取文件相关信息 参考博客http://www.cnblogs.com/hnrainll/archive/2011/05/11/2043361.html
@@ -918,7 +918,7 @@ int compile(int lang,char * work_dir) {
 		LIM.rlim_cur = 60;					// 资源限制值的最大值
 		setrlimit(RLIMIT_CPU, &LIM);		// 最大允许的CPU使用时间，即所谓的运行时间
 		alarm(60);
-		LIM.rlim_max = 10 * STD_MB;				
+		LIM.rlim_max = 10 * STD_MB;
 		LIM.rlim_cur = 10 * STD_MB;
 		setrlimit(RLIMIT_FSIZE, &LIM);		// 可以创建的文件的最大字节长度
 
@@ -987,10 +987,10 @@ int compile(int lang,char * work_dir) {
 			execvp(CP_CS[0], (char * const *) CP_CS);
 			break;
 
-		case 10:	// 
+		case 10:	//
 			execvp(CP_OC[0], (char * const *) CP_OC);
 			break;
-		case 11:	// 
+		case 11:	//
 			execvp(CP_BS[0], (char * const *) CP_BS);
 			break;
 		case 13:	// Clang for C
@@ -2123,7 +2123,7 @@ int get_test_file(char* work_dir, int p_id) {
 	const char * cmd =
 			" wget --post-data=\"gettestdatalist=1&pid=%d\" --load-cookies=cookie --save-cookies=cookie --keep-session-cookies -q -O - \"%s/admin/problem_judge.php\"";
 	// 通过POST的方式向web传输请求，然后相应的php页面会echo相应返回值
-	FILE * fjobs = read_cmd_output(cmd, p_id, http_baseurl);		
+	FILE * fjobs = read_cmd_output(cmd, p_id, http_baseurl);
 	while (fgets(filename, BUFFER_SIZE - 1, fjobs) != NULL) {
 		sscanf(filename, "%s", filename);
 		if(http_judge&&(!data_list_has(filename))) data_list_add(filename);	// 忍不住吐槽一下，代码风格总是突变，感觉不是一个人写的
@@ -2158,7 +2158,7 @@ int get_test_file(char* work_dir, int p_id) {
 					const char * cmd3 = "gcc -o %s/data/%d/spj %s/data/%d/spj.c";
 					execute_cmd(cmd3, oj_home, p_id, oj_home, p_id);
 				}
-                
+
 			}
 			if (strcmp(filename, "spj.cc") == 0) {
 				//     sprintf(localfile,"%s/data/%d/spj.cc",oj_home,p_id);
@@ -2247,7 +2247,7 @@ int main(int argc, char** argv) {
 
 	get_solution(solution_id, work_dir, lang);					// 根据获取到的信息生成源代码文件
 
-	//java is lucky			
+	//java is lucky
 	if (lang >= 3 && lang != 10 && lang != 13 && lang != 14) {  // Clang Clang++ not VM or Script
 		// the limit for java
 		time_lmt = time_lmt + java_time_bonus;
@@ -2282,7 +2282,7 @@ int main(int argc, char** argv) {
 		clean_workdir(work_dir);
 		write_log("compile error");
 		exit(0);
-	} else {	
+	} else {
 		update_solution(solution_id, OJ_RI, 0, 0, 0, 0, 0.0);	// 告诉web端编译成功，正在运行中
 		umount(work_dir);
 	}
@@ -2295,7 +2295,7 @@ int main(int argc, char** argv) {
 	sprintf(fullpath, "%s/data/%d", oj_home, p_id); // the fullpath of data dir	// 生成测试数据目录
 
 	// open DIRs
-	DIR *dp;						
+	DIR *dp;
 	dirent *dirp;
 	// using http to get remote test data files
 	if (p_id > 0 && http_judge)
@@ -2307,7 +2307,7 @@ int main(int argc, char** argv) {
 		exit(-1);
 	}
 	// 接下来就是运行可执行文件了
-	int ACflg, PEflg;				
+	int ACflg, PEflg;
 	ACflg = PEflg = OJ_AC;
 	int namelen;
 	int usedtime = 0, topmemory = 0;		// 运行耗时，所用内存
@@ -2342,8 +2342,8 @@ int main(int argc, char** argv) {
 	int num_of_test = 0;						// 通过了多少测试数据文件
 	int finalACflg = ACflg;
 	if (p_id == 0) {  //custom input running	// 测试用题号
-		printf("running a custom input...\n");					
-		get_custominput(solution_id, work_dir);	
+		printf("running a custom input...\n");
+		get_custominput(solution_id, work_dir);
 		init_syscalls_limits(lang);
 		pid_t pidApp = fork();
 
@@ -2368,11 +2368,11 @@ int main(int argc, char** argv) {
 		clean_workdir(work_dir);
 		exit(0);
 	}
-	
+
 	// dirp=readdir(dp)这里的意思是只要还有测试文件可以读取，就继续judge
 	for (; (oi_mode || ACflg == OJ_AC|| ACflg == OJ_PE) && (dirp = readdir(dp)) != NULL;) {
 
-		namelen = isInFile(dirp->d_name); // check if the file is *.in or not
+		namelen = isInFile(dirp->d_name); // check if the file is *.in or not	// namelen 是文件除去扩展名后的长度
 		if (namelen == 0)				  // 读取到的文件不是输入数据文件的话
 			continue;
 
@@ -2380,8 +2380,8 @@ int main(int argc, char** argv) {
 			continue;
 
 		prepare_files(dirp->d_name, namelen, infile, p_id, work_dir, outfile,
-				userfile, runner_id);
-		init_syscalls_limits(lang);
+				userfile, runner_id);					// 准备将本次要用到的测试数据文件复制过来
+		init_syscalls_limits(lang);						
 
 		pid_t pidApp = fork();
 
