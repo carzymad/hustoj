@@ -54,6 +54,8 @@ Linux不熟悉的用户推荐使用[HUSTOJ_LiveCD](http://pan.baidu.com/s/1o78D4
 
 Linux新手请看[鸟哥的私房菜](http://cn.linux.vbird.org/linux_basic/linux_basic.php)
 
+<br />
+
 ## crazy_mad 声明
 
 这个fork版本主要是为了学习hustoj的源代码，我主要是在里面加上注释和自己的理解
