@@ -59,5 +59,6 @@ Linux新手请看[鸟哥的私房菜](http://cn.linux.vbird.org/linux_basic/linu
 这个fork版本主要是为了学习hustoj的源代码，我主要是在里面加上注释和自己的理解
 
 ## 流程图演示
-<div style="float:left"><img src="https://github.com/carzymad/images/blob/master/HUSTOJ.png"></div>
-<div style="float:left"><img src="https://github.com/carzymad/images/blob/master/HUSTOJ-judge_client.png"></div>
+看了几天代码，实在受不了在进程里面飞来飞去不知所措，先赶紧把大致的流程图画出来，接下来看代码的时候不至于晕
+<div style="float:left"><img src="https://github.com/carzymad/HUSTOJ/blob/master/HUSTOJ-judge_client.png"></div>
+<div style="float:left"><img src="https://github.com/carzymad/HUSTOJ/blob/master/HUSTOJ-judged.png"></div>
