@@ -957,7 +957,7 @@ int compile(int lang,char * work_dir) {
 // execvp()会从PATH 环境变量所指的目录中查找符合参数 file 的文件名, 找到后便执行该文件, 然后将第二个参数argv传给该欲执行的文件。
 		switch (lang) {			// 根据不同的语言类型，执行不同的命令
 		case 0:		// GCC
-			execvp(CP_C[0], (char * const *) CP_C);
+			execvp(CP_C[0], (char * const *) CP_C);	// execvp()会从PATH 环境变量所指的目录中查找符合参数file 的文件名，找到后便执行该文件，然后将第二个参数argv传给该欲执行的文件。
 			break;
 		case 1:		// G++
 			execvp(CP_X[0], (char * const *) CP_X);
@@ -1516,7 +1516,7 @@ void copy_lua_runtime(char * work_dir) {
 }
 void copy_js_runtime(char * work_dir) {
 
-//	copy_shell_runtime(work_dir);
+//	copy_shell_runtime(work_dir);		
 	execute_cmd("/bin/mkdir -p %s/usr/lib /lib/i386-linux-gnu/", work_dir);
         execute_cmd("/bin/cp /lib/i386-linux-gnu/libz.so.*  %s/lib/i386-linux-gnu/", work_dir);
         execute_cmd("/bin/cp /usr/lib/i386-linux-gnu/libcares.so.*  %s/lib/i386-linux-gnu/", work_dir);
@@ -1555,17 +1555,17 @@ void run_solution(int & lang, char * work_dir, int & time_lmt, int & usedtime,
 	nice(19);
 	// now the user is "judger"
 	chdir(work_dir);
-	// open the files
-	freopen("data.in", "r", stdin);
-	freopen("user.out", "w", stdout);
-	freopen("error.out", "a+", stderr);
-	// trace me
+	// open the files						// 子进程会继承下面的文件描述符，包括execl函数执行的进程
+	freopen("data.in", "r", stdin);			// 打开测试数据输入文件
+	freopen("user.out", "w", stdout);		// 打开用户输出文件
+	freopen("error.out", "a+", stderr);		// 打开运行错误输出文件
+	// trace me	// 进程跟踪 让父进程跟踪当前子进程（即自己）
 	if(use_ptrace) ptrace(PTRACE_TRACEME, 0, NULL, NULL);
 	// run me
 	if (lang != 3)
 		chroot(work_dir);
 
-	while (setgid(1536) != 0)
+	while (setgid(1536) != 0)			// 为什么一定要将进程id改成1536。。。表示不理解
 		sleep(1);
 	while (setuid(1536) != 0)
 		sleep(1);
@@ -1575,7 +1575,7 @@ void run_solution(int & lang, char * work_dir, int & time_lmt, int & usedtime,
 //      char java_p1[BUFFER_SIZE], java_p2[BUFFER_SIZE];
 	// child
 	// set the limit
-	struct rlimit LIM; // time limit, file limit& memory limit
+	struct rlimit LIM; // time limit, file limit & memory limit
 	// time limit
 	if (oi_mode)
 		LIM.rlim_cur = time_lmt + 1;
@@ -1591,7 +1591,7 @@ void run_solution(int & lang, char * work_dir, int & time_lmt, int & usedtime,
 	LIM.rlim_max = STD_F_LIM + STD_MB;
 	LIM.rlim_cur = STD_F_LIM;
 	setrlimit(RLIMIT_FSIZE, &LIM);
-	// proc limit
+	// proc limit // 设置用户可以拥有的进程数
 	switch (lang) {
 	case 17:
 		LIM.rlim_cur = LIM.rlim_max = 280;
@@ -1612,11 +1612,11 @@ void run_solution(int & lang, char * work_dir, int & time_lmt, int & usedtime,
 
 	setrlimit(RLIMIT_NPROC, &LIM);
 
-	// set the stack
+	// set the stack	// 最大的进程堆栈
 	LIM.rlim_cur = STD_MB << 6;
 	LIM.rlim_max = STD_MB << 6;
 	setrlimit(RLIMIT_STACK, &LIM);
-	// set the memory
+	// set the memory	// 最大的内存空间
 	LIM.rlim_cur = STD_MB * mem_lmt / 2 * 3;
 	LIM.rlim_max = STD_MB * mem_lmt * 2;
 	if (lang < 3)
@@ -2098,7 +2098,7 @@ void mk_shm_workdir(char * work_dir) {
 	char shm_path[BUFFER_SIZE];
 	sprintf(shm_path, "/dev/shm/hustoj/%s", work_dir);
 	execute_cmd("/bin/mkdir -p %s", shm_path);
-	execute_cmd("/bin/ln -s %s %s/", shm_path, oj_home);
+	execute_cmd("/bin/ln -s %s %s/", shm_path, oj_home);		// 通过oj_home访问_path
 	execute_cmd("/bin/chown judge %s ", shm_path);
 	execute_cmd("chmod 755 %s ", shm_path);
 	//sim need a soft link in shm_dir to work correctly
@@ -2198,12 +2198,16 @@ void print_call_array() {
  * argv[1]:solution_id, argv[2]:ID[index], argv[3]:oj_home
  */
 int main(int argc, char** argv) {
-
-	char work_dir[BUFFER_SIZE];
+/*
+ * 父进程的工作目录是/home/judge/ 然而当前进程的工作是父进程工作目录下的一个文件夹
+ * 这样做的目的是为了搭建一个沙箱环境，防止运行用户代码的时候不会对系统造成破坏
+ *
+ */	
+	char work_dir[BUFFER_SIZE];									// 工作目录字符串
 	//char cmd[BUFFER_SIZE];
-	char user_id[BUFFER_SIZE];
-	int solution_id = 1000;
-	int runner_id = 0;
+	char user_id[BUFFER_SIZE];							
+	int solution_id = 1000;										// mysql中solution表的键值
+	int runner_id = 0;											// runner_id 关系到当前进程的工作目录					
 	int p_id, time_lmt, mem_lmt, lang, isspj, sim, sim_s_id, max_case_time = 0;
 
 	init_parameters(argc, argv, solution_id, runner_id);		// 根据命令行参数初始化数据
@@ -2214,34 +2218,34 @@ int main(int argc, char** argv) {
 		exit(0); //exit if mysql is down
 	}
 	//set work directory to start running & judging
-	sprintf(work_dir, "%s/run%s/", oj_home, argv[2]);			//
+	sprintf(work_dir, "%s/run%s/", oj_home, argv[2]);			// 生成工作目录路径
 
 	/* 文件目录树状图表示
 	 *  /home
-	 *  └───.hustoj
-	 *      ├───.run1		====> 这种文件就是work_dir
+	 *  └───.judge
+	 *      ├───.run1		====> 这种文件就是 judge_client 进程的work_dir
 	 *      ├───.run2
 	 *      ├───.run3
 	 *      └───.runx
 	 */
 
-	clean_workdir(work_dir);
-	if (shm_run)												// 该项目中shm_run默认是1
-		mk_shm_workdir(work_dir);								// 创建工作目录
+	clean_workdir(work_dir);					// 清理工作目录，防止异常
+	if (shm_run)								// 该项目中shm_run默认是1
+		mk_shm_workdir(work_dir);				// 创建工作目录
 
-	chdir(work_dir);											// 进入工作目录 /home/hustoj/runX
+	chdir(work_dir);		// 改变工作目录为 '/home/judge/runX'
 
 	if (http_judge)
 		system("/bin/ln -s ../cookie ./");
 	get_solution_info(solution_id, p_id, user_id, lang);		// 获取本次评测的提交信息
 	//get the limit
 
-	if (p_id == 0) {
+	if (p_id == 0) {				// 测试用
 		time_lmt = 5;
 		mem_lmt = 128;
 		isspj = 0;
 	} else {
-		get_problem_info(p_id, time_lmt, mem_lmt, isspj);		// 获取题目信息：时间限制、内存限制、????
+		get_problem_info(p_id, time_lmt, mem_lmt, isspj);		// 获取题目信息：时间限制、内存限制、是否要开启特殊判断
 	}
 	//copy source file
 
@@ -2258,7 +2262,7 @@ int main(int argc, char** argv) {
 	}
 
 	//never bigger than judged set value;
-	if (time_lmt > 300 || time_lmt < 1)
+	if (time_lmt > 300 || time_lmt < 1)			// 题目设置的限制值不能大于OJ设置的最大值
 		time_lmt = 300;
 	if (mem_lmt > 1024 || mem_lmt < 1)
 		mem_lmt = 1024;
@@ -2279,7 +2283,7 @@ int main(int argc, char** argv) {
 		update_problem(p_id);
 		if (!http_judge)
 			mysql_close(conn);
-		clean_workdir(work_dir);
+		clean_workdir(work_dir);								// 清理工作目录，为下个solution准备
 		write_log("compile error");
 		exit(0);
 	} else {
@@ -2288,9 +2292,9 @@ int main(int argc, char** argv) {
 	}
 	//exit(0);
 	// run
-	char fullpath[BUFFER_SIZE];
-	char infile[BUFFER_SIZE];
-	char outfile[BUFFER_SIZE];
+	char fullpath[BUFFER_SIZE];						// 测试数据目录	一般是 '/home/judge/data/1000' 这样的格式
+	char infile[BUFFER_SIZE];						// 测试数据-输入文件
+	char outfile[BUFFER_SIZE];						// 测试数据-输出文件
 	char userfile[BUFFER_SIZE];						// 用户的源码运行后输出的数据
 	sprintf(fullpath, "%s/data/%d", oj_home, p_id); // the fullpath of data dir	// 生成测试数据目录
 
@@ -2299,7 +2303,7 @@ int main(int argc, char** argv) {
 	dirent *dirp;
 	// using http to get remote test data files
 	if (p_id > 0 && http_judge)
-		get_test_file(work_dir, p_id);				// 获取测试数据文件的文件名字列表 并生成测试数据文件
+		get_test_file(work_dir, p_id);				// 获取测试数据文件的文件名字列表 并更新 /home/judge/data 目录下的测试数据文件
 	if (p_id > 0 && (dp = opendir(fullpath)) == NULL) {
 		write_log("No such dir:%s!\n", fullpath);
 		if (!http_judge)
@@ -2308,7 +2312,7 @@ int main(int argc, char** argv) {
 	}
 	// 接下来就是运行可执行文件了
 	int ACflg, PEflg;
-	ACflg = PEflg = OJ_AC;
+	ACflg = PEflg = OJ_AC;					// 标记测试结果	格式错误的标记信息被另外单独拎出来处理
 	int namelen;
 	int usedtime = 0, topmemory = 0;		// 运行耗时，所用内存
 
@@ -2341,7 +2345,7 @@ int main(int argc, char** argv) {
 	double pass_rate = 0.0;						// 题目通过率
 	int num_of_test = 0;						// 通过了多少测试数据文件
 	int finalACflg = ACflg;
-	if (p_id == 0) {  //custom input running	// 测试用题号
+	if (p_id == 0) {  //custom input running	// 测试用 测试数据校验模块
 		printf("running a custom input...\n");
 		get_custominput(solution_id, work_dir);
 		init_syscalls_limits(lang);
@@ -2381,13 +2385,12 @@ int main(int argc, char** argv) {
 
 		prepare_files(dirp->d_name, namelen, infile, p_id, work_dir, outfile,
 				userfile, runner_id);					// 准备将本次要用到的测试数据文件复制过来
-		init_syscalls_limits(lang);						
+		init_syscalls_limits(lang);						// 根据语言类型，事先配置好子进程系统资源限制			
 
-		pid_t pidApp = fork();
+		pid_t pidApp = fork();			// 创建子进程
 
 		if (pidApp == 0) {
-
-			run_solution(lang, work_dir, time_lmt, usedtime, mem_lmt);
+			run_solution(lang, work_dir, time_lmt, usedtime, mem_lmt);	// 根据工作目录、资源限制运行用户代码
 		} else {
 
 			num_of_test++;
