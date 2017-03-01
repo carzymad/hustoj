@@ -536,8 +536,9 @@ int daemon_init(void)						// 创建守护进程
 	if ((pid = fork()) < 0)
 		return (-1);
 
+	// 守护进程创建成功后，父进程退出，然后子进程被init进程接管，变成在后台运行的程序 
 	else if (pid != 0)
-		exit(0); /* parent exit */			// 守护进程创建成功后，父进程退出
+		exit(0); /* parent exit */
 
 	/* child continues */					// 接下来的是子进程内容
 
