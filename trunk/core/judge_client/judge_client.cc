@@ -2042,7 +2042,7 @@ void init_parameters(int argc, char ** argv, int & solution_id,
 	}
 	DEBUG = (argc > 4);
 	record_call = (argc > 5);
-	if (argc > 5) {
+	if (argc > 5) {						// 语言名字?
 		strcpy(LANG_NAME, argv[5]);
 	}
 	if (argc > 3)
@@ -2050,10 +2050,10 @@ void init_parameters(int argc, char ** argv, int & solution_id,
 	else
 		strcpy(oj_home, "/home/judge");
 
-	chdir(oj_home); // change the dir// init our work	// 改变工作目录
+	chdir(oj_home); // change the dir// init our work	// 改变工作目录,oj_home默认是 /home/judge/
 
 	solution_id = atoi(argv[1]);
-	runner_id = atoi(argv[2]);							// 父进程中ID列表的编号
+	runner_id = atoi(argv[2]);							// 父进程中ID列表的编号,用户生成沙箱空间
 }
 int get_sim(int solution_id, int lang, int pid, int &sim_s_id) {
 	char src_pth[BUFFER_SIZE];
