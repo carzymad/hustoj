@@ -230,7 +230,7 @@ void run_client(int runid, int clientid) {
 
 	if (!DEBUG)
 		execl("/usr/bin/judge_client", "/usr/bin/judge_client", runidstr, buf,
-				oj_home, (char *) NULL);					// 执行 judge_client 程序
+				oj_home, (char *) NULL);					// 启动 judge_client 程序代替当前进程
 	else
 		execl("/usr/bin/judge_client", "/usr/bin/judge_client", runidstr, buf,
 				oj_home, "debug", (char *) NULL);
@@ -420,7 +420,7 @@ bool check_out(int solution_id, int result) {
 }
 int work() {
 //      char buf[1024];
-	static int retcnt = 0;
+	static int retcnt = 0;		
 	int i = 0;
 	static pid_t ID[100];			// 进程号列表
 	static int workcnt = 0;			// 当前正在工作的进程数量
@@ -443,7 +443,7 @@ int work() {
 			continue;
 		if (DEBUG)
 			write_log("Judging solution %d", runid);
-		if (workcnt >= max_running) {           // if no more client can running  正在工作的子进程的数量大于等于最大子进程数量的时候
+		if (workcnt >= max_running) {           // if no more client can running 正在工作的子进程的数量大于等于最大子进程数量的时候
 			tmp_pid = waitpid(-1, NULL, 0);     // wait 4 one child exit	等待有子进程结束 相当于wait()函数 以阻塞的方式等待
 			for (i = 0; i < max_running; i++){  // get the client id 寻找结束的那个子进程
 				if (ID[i] == tmp_pid){			// 当找到结束的子进程ID后，重置该ID
@@ -456,28 +456,26 @@ int work() {
 		} else {                             	// have free client		如果当前正在运行的子进程数量尚未达到最大数
 			for (i = 0; i < max_running; i++)   // find the client id	寻找列表中空闲的那个ID
 				if (ID[i] == 0)
-					break;    // got the client id
+					break;    // got the client id			// 找到空闲的进程空间后break出去分配进程、空间
 		}
 		if (i<max_running){
 			if (workcnt < max_running && check_out(runid, OJ_CI)) {
 				workcnt++;
 				ID[i] = fork();                                 // start to fork
-				if (ID[i] == 0) {								// 子进程
+				if (ID[i] == 0) {								// 子进程(等下该子进程将由 judge_client 代替)
 					if (DEBUG)
 						write_log("<<=sid=%d===clientid=%d==>>\n", runid, i);
-					run_client(runid, i);    // if the process is the son, run it			// 运行 judge_client 来评测提交
+					run_client(runid, i);    // if the process is the son, run it	// 运行 judge_client 来评测提交
 					exit(0);
 				}
-
 			} else {
 				ID[i] = 0;
 			}
 		}
 	}
-	while ((tmp_pid = waitpid(-1, NULL, WNOHANG)) > 0) {
-		for (i = 0; i < max_running; i++){     // get the client id
+	while ((tmp_pid = waitpid(-1, NULL, WNOHANG)) > 0) {	// 等待任意一个进程结束，若没结束返回0
+		for (i = 0; i < max_running; i++){     // get the client id // 获取刚才结束的那个进程id
 			if (ID[i] == tmp_pid){
-			
 				workcnt--;
 				retcnt++;
 				ID[i] = 0;
@@ -497,7 +495,7 @@ int work() {
 	return retcnt;
 }
 
-int lockfile(int fd) {
+int lockfile(int fd) {				
 	struct flock fl;
 	fl.l_type = F_WRLCK;			// 写锁
 	fl.l_start = 0;
@@ -542,18 +540,18 @@ int daemon_init(void)						// 创建守护进程
 
 	/* child continues */					// 接下来的是子进程内容
 
-	setsid(); /* become session leader */	// 将当前子进程变为领导进程
+	setsid(); /* become session leader */	// 将当前子进程称为无终端的会话组长
 
 	chdir(oj_home); /* change working directory */
 
-	umask(0); /* clear file mode creation mask */		// 暂时看不懂，先放着
+	umask(0); /* clear file mode creation mask */		// 重设文件创建掩模 相关资料可参考博客http://blog.csdn.net/lmh12506/article/details/7281910
 
 	close(0); /* close stdin */			// 关闭标准输入套接字
 	close(1); /* close stdout */		// 关闭标准输出套接字
 		
 	close(2); /* close stderr */		// 关闭标准错误输出套接字
 	
-	int fd = open( "/dev/null", O_RDWR );
+	int fd = open( "/dev/null", O_RDWR );	// /dev/null文件是个无意义的文件，像个黑洞
 	dup2( fd, 0 );						// 将0、1、2套接字重定向到/dev/null中
 	dup2( fd, 1 );
 	dup2( fd, 2 );
@@ -574,7 +572,7 @@ int main(int argc, char** argv) {
 	chdir(oj_home);    // change the dir					// 进入oj_hone文件夹
 
 	sprintf(lock_file,"%s/etc/judge.pid",oj_home);			// 进程文件目录
-	if (!DEBUG)												// DEBUG默认值是0
+	if (!DEBUG)												// 如果是调试模式的话，没必要创建守护进程，因为守护进程不能直接直接将信息输出到屏幕上
 		daemon_init();										// 创建守护进程
 	if ( already_running()) {								// 准备工作，写进程文件，同时判断是否已有相同程序已在运行
 		syslog(LOG_ERR | LOG_DAEMON,
@@ -588,9 +586,9 @@ int main(int argc, char** argv) {
 //	final_sleep.tv_sec=0;
 //	final_sleep.tv_nsec=500000000;
 	init_mysql_conf();	// set the database info
-	signal(SIGQUIT, call_for_exit);
-	signal(SIGKILL, call_for_exit);
-	signal(SIGTERM, call_for_exit);
+	signal(SIGQUIT, call_for_exit);	// SIGQUIT 	建立CORE文件终止进程，并且生成core文件
+	signal(SIGKILL, call_for_exit); // 终止进程	杀死进程
+	signal(SIGTERM, call_for_exit); // 终止进程	软件终止信号
 	int j = 1;
 	while (1) {			// start to run
 		while (j && (http_judge || !init_mysql())) {
@@ -598,7 +596,7 @@ int main(int argc, char** argv) {
 			j = work();
 
 		}
-		if(ONCE) break;
+		if(ONCE) break;			// 是否只执行一轮就结束
 		sleep(sleep_time);
 		j = 1;
 	}
