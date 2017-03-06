@@ -34,3 +34,7 @@ void get_solution_info(int solution_id, int & p_id, char * user_id, int &lang);
 void get_problem_info(int p_id, int & time_lmt, int & mem_lmt, int & isspj);
     传入problem表的键值‘problem_id’(就是p_id),获取题目的运行限制参数，以及是否要打开特殊评
 测的标记。
+
+void get_solution(int solution_id, char *work_dir, int lang);
+	传入solution表的键码，查询到用户提交的代码，然后根据传入的语言类型、工作目录信息来生成源
+代码文件。
