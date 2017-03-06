@@ -16,7 +16,7 @@ MYSQL *conn;				// 预留的mysql连接指针
 static int statu = 0;					// 当前读取的状态（注释、括号）
 /*
  * 1 单行注释
- * 2 多行注释
+ * 2 多行注释 
  * 3 小括号
  * 4 中括号 
  * 5 大括号
@@ -66,7 +66,8 @@ char *find_notes_end(FILE *s_code, char *line, char *ptr) {
 		int len = strlen(line);
 		for (int i = 0; i < len; i++) {
 			if (line[i] == '*' && i != len-1 && line[i+1] == '/') {
-				return (ptr+i);
+				statu = 3;
+				return (ptr+i+2);
 			}
 		}
 	} while (fgets(line, 256, s_code));
@@ -94,6 +95,9 @@ void check_algorithm(FILE *s_code) {
 					break;
 				}
 				len = strlen(line);					// 重新为line的长度赋值
+			} else if (statu == 3) {
+				ptr += 2;
+				continue;
 			} else if (statu == 6) {
 				ptr += 1;
 				continue;
@@ -116,7 +120,6 @@ int main(int argc, char* argv[]) {
 	FILE *s_code;			// 源代码文件指针
 	char file_name[256] = { 0 };			// 源代码文件名
 
-	printf("%d\n", argc);
 	init_parameters(argc, argv, file_name);
 	s_code = fopen(file_name, "r");
 	if (s_code == NULL) {

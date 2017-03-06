@@ -1,21 +1,17 @@
+/*********************************************************
+ * Author			: crazy_mad
+ * Last modified	: 2017-03-06 12:33
+ * Filename			: main.c
+ * Description		: 
+ *********************************************************/
+
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 int main(int argc, char* argv[])
 {
-	for (int i = 1; i < 10; i++) {//test
-		/*hello world!*/printf("hello world!\n");
-	}
-	FILE *fp;
-	char buf[256] = { 0 };
-	fp = fopen("main.c", "r");
-	while (fgets(buf, 256, fp)) {
-		printf("%s\n", buf);
-	}
-	while (fgets(buf, 256, fp)) {
-		printf("%s\n", buf);
-	}
-	fclose(fp);
+	execl("./algorithm", "algorithm", "main.c");
 
 	return 0;
 }
