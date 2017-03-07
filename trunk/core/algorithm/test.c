@@ -4,7 +4,7 @@
 int main(int argc, char* argv[])
 {
 	int a = 1;
-	"switch(a) {"
+	switch(a) {
 		case 1:
 			printf("1\n");
 	}

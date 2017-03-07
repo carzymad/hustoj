@@ -222,7 +222,7 @@ void run_client(int runid, int clientid) {
 
 	//buf[0]=clientid+'0'; buf[1]=0;
 	sprintf(runidstr, "%d", runid);
-	sprintf(buf, "%d", clientid);
+	sprintf(buf, "%d", clientid);				// clientid用于生成judge_client的工作目录
 
 	//write_log("sid=%s\tclient=%s\toj_home=%s\n",runidstr,buf,oj_home);
 	//sprintf(err,"%s/run%d/error.out",oj_home,clientid);

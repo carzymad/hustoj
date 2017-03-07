@@ -124,6 +124,7 @@ static char lang_ext[18][8] = { "c", "cc", "pas", "java", "rb", "sh", "py",
 "php", "pl", "cs", "m", "bas", "scm","c","cc","lua","js","go" };
 //7     8     9    10   11      12   13  14    15   16   17
 //static char buf[BUFFER_SIZE];
+void clean_workdir(char * work_dir);
 int data_list_has(char * file){
     for (int i=0; i<data_list_len; i++) {
         if (strcmp(data_list[i],file) == 0)
@@ -638,11 +639,13 @@ void _addceinfo_mysql(int solution_id) {
 			solution_id);			// solution_id 位数被限制到2^15-1长度(十进制)
 	mysql_real_query(conn, sql, strlen(sql));
 	cend = ceinfo;
+	printf("_addceinfo_mysql\n");
 	while (fgets(cend, 1024, fp)) {
 		cend += strlen(cend);
 		if (cend - ceinfo > 40000)
 			break;
 	}
+	printf("_addceinfo_mysql\n");
 	cend = 0;
 	end = sql;
 	strcpy(end, "INSERT INTO compileinfo VALUES(");
@@ -660,6 +663,7 @@ void _addceinfo_mysql(int solution_id) {
 	if (mysql_real_query(conn, sql, end - sql))
 		printf("%s\n", mysql_error(conn));
 	fclose(fp);
+	printf("_addceinfo_mysql\n");
 }
 // urlencoded function copied from http://www.geekhideout.com/urlcode.shtml
 /* Converts a hex character to its integer value */
@@ -720,9 +724,11 @@ void _addceinfo_http(int solution_id) {
 }
 // 编译错误的提交
 void addceinfo(int solution_id) {
+	printf("addceinfo\n");
 	if (http_judge) {
 		_addceinfo_http(solution_id);
 	} else {
+		printf("addceinfo use mysql\n");
 		_addceinfo_mysql(solution_id);
 	}
 }
@@ -1116,17 +1122,48 @@ void _get_solution_http(int solution_id, char * work_dir, int lang) {
 	pclose(pout);
 
 }
-void get_solution(int solution_id, char * work_dir, int lang, int p_id) {
+void get_solution(int solution_id, char * work_dir, int lang, int p_id, char* user_id) {
 	if (http_judge) {
 		_get_solution_http(solution_id, work_dir, lang);
 	} else {
 		_get_solution_mysql(solution_id, work_dir, lang);
 	}
 
-	if (fork() == 0) {
-		execl("../algorithm/algorithm", "algorithm", work_dir, p_id, (char*)NULL);
-	} else {
-		waitpid();					// 等待子进程结束
+	char src_path[256] = { 0 };
+	sprintf(src_path, "%s/Main.c", work_dir);
+	
+	pid_t pid  = fork();
+	printf("\n\ncrazy_mad最帅 %d\n", pid);
+	if (pid == 0) {
+		execl("/usr/bin/algorithm", "algorithm", src_path, (char*)NULL);
+		//execl("/usr/bin/algorithm", "algorithm", "/home/judge/run1/Main.c", (char*)NULL);
+		//execl("/usr/bin/algorithm", "algorithm", "/home/crazymad/github/hustoj/trunk/core/algorithm/test.c", (char*)NULL);
+	} else if (pid > 0){
+		int ret;
+		wait(&ret);
+		ret = WEXITSTATUS(ret);
+		printf("返回值:%d\n\n", ret);
+				FILE *ce = fopen("ce.txt", "w");
+		switch (ret) {			// 判断algorithm检查器返回值
+			case 1:				// 方便起见，先将不符合要求的结果定义为编译错误
+				fprintf(ce, "没用struct");
+				fclose(ce);
+				addceinfo(solution_id);
+				update_solution(solution_id, OJ_CE, 0, 0, 0, 0, 0.0);
+				update_user(user_id);
+				update_problem(p_id);
+				if (!http_judge)
+					mysql_close(conn);
+				clean_workdir(work_dir);								// 清理工作目录，为下个solution准备
+				write_log("compile error");
+				exit(0);
+				break;
+			case 2:
+				printf("打开文件失败！\n");
+				exit(0);
+				break;
+		}
+				fclose(ce);
 	}
 }
 
@@ -2254,7 +2291,7 @@ int main(int argc, char** argv) {
 	}
 	//copy source file
 
-	get_solution(solution_id, work_dir, lang, p_id);					// 根据获取到的信息生成源代码文件
+	get_solution(solution_id, work_dir, lang, p_id, user_id);					// 根据获取到的信息生成源代码文件
 
 	//java is lucky
 	if (lang >= 3 && lang != 10 && lang != 13 && lang != 14) {  // Clang Clang++ not VM or Script
