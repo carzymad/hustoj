@@ -1157,7 +1157,7 @@ void get_solution(int solution_id, char * work_dir, int lang, int p_id, char* us
 		wait(&ret);
 		ret = WEXITSTATUS(ret);
 		printf("返回值:%d\n\n", ret);
-				FILE *ce = fopen("ce.txt", "w");
+		FILE *ce = fopen("ce.txt", "w");
 		switch (ret) {			// 判断algorithm检查器返回值
 			case 1:				// 方便起见，先将不符合要求的结果定义为编译错误
 				fprintf(ce, "没用swtich");
