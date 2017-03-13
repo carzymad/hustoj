@@ -1144,12 +1144,13 @@ void get_solution(int solution_id, char * work_dir, int lang, int p_id, char* us
 	}
 
 	char src_path[256] = { 0 };
+	char sp_id[256] = { 0 };
 	sprintf(src_path, "%s/Main.c", work_dir);
+	sprintf(sp_id, "%d", p_id);
 	
 	pid_t pid  = fork();
-	printf("\n\ncrazy_mad最帅 %d\n", pid);
 	if (pid == 0) {
-		execl("/usr/bin/algorithm", "algorithm", src_path, (char*)NULL);
+		execl("/usr/bin/algorithm", "algorithm", src_path, sp_id, oj_home, (char*)NULL);
 		//execl("/usr/bin/algorithm", "algorithm", "/home/judge/run1/Main.c", (char*)NULL);
 		//execl("/usr/bin/algorithm", "algorithm", "/home/crazymad/github/hustoj/trunk/core/algorithm/test.c", (char*)NULL);
 	} else if (pid > 0){
@@ -2256,7 +2257,7 @@ void print_call_array() {
 int main(int argc, char** argv) {
 /*
  * 父进程的工作目录是/home/judge/ 然而当前进程的工作是父进程工作目录下的一个文件夹
- * 这样做的目的是为了搭建一个沙箱环境，防止运行用户代码的时候不会对系统造成破坏
+ * 这样做的目的是为了搭建一个沙箱环境，防止运行用户代码的时候对系统造成破坏
  *
  */	
 	char work_dir[BUFFER_SIZE];									// 工作目录字符串
