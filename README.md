@@ -68,3 +68,8 @@ Linux新手请看[鸟哥的私房菜](http://cn.linux.vbird.org/linux_basic/linu
 
 ### judge_client
 <div style="float:left"><img src="https://github.com/carzymad/HUSTOJ/blob/master/HUSTOJ-judge_client.png"></div>
+
+## 增加的功能
+增加了一个语法判断的模块，命名为algorithm，修改了一下数据库，增加了一个表"key_words"，
+这个表用于储存题目要求必须用到的关键字，另外"problem"表增加了一列"algorithm"，
+意即是否需要使用algorithm模块，因为不是每道题都要求必须使用到指定的关键字。
