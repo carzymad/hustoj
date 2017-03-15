@@ -1128,7 +1128,9 @@ void get_solution(int solution_id, char * work_dir, int lang, int p_id, char* us
 	} else {
 		_get_solution_mysql(solution_id, work_dir, lang);
 	}
-
+	/*
+	 * 以下代码均为二次开发
+	 */
 	char sql[BUFFER_SIZE];
 	MYSQL_RES *res;
 	MYSQL_ROW row;
@@ -1178,7 +1180,7 @@ void get_solution(int solution_id, char * work_dir, int lang, int p_id, char* us
 				exit(0);
 				break;
 		}
-				fclose(ce);
+		fclose(ce);
 	}
 }
 
