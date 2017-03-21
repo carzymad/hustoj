@@ -117,6 +117,7 @@ static int shm_run = 0;
 static char record_call = 0;
 static int use_ptrace = 1;
 
+
 //static int sleep_tmp;
 #define ZOJ_COM
 MYSQL *conn;				// 连接mysql
@@ -1086,8 +1087,8 @@ int init_mysql_conn() {					// 连接数据库
 	}
 	return 1;
 }
-void _get_solution_mysql(int solution_id, char * work_dir, int lang) {
-	char sql[BUFFER_SIZE], src_pth[BUFFER_SIZE];
+void _get_solution_mysql(int solution_id, char * work_dir, int lang, char *src_pth) {
+	char sql[BUFFER_SIZE];//, src_pth[BUFFER_SIZE];
 	// get the source code
 	MYSQL_RES *res;
 	MYSQL_ROW row;
@@ -1106,8 +1107,8 @@ void _get_solution_mysql(int solution_id, char * work_dir, int lang) {
 	mysql_free_result(res);
 	fclose(fp_src);
 }
-void _get_solution_http(int solution_id, char * work_dir, int lang) {
-	char src_pth[BUFFER_SIZE];
+void _get_solution_http(int solution_id, char * work_dir, int lang, char *src_pth) {
+	//char src_pth[BUFFER_SIZE];
 
 	// create the src file
 	sprintf(src_pth, "Main.%s", lang_ext[lang]);
@@ -1124,18 +1125,17 @@ void _get_solution_http(int solution_id, char * work_dir, int lang) {
 
 }
 void get_solution(int solution_id, char * work_dir, int lang, int p_id, char* user_id) {
+	char src_pth[BUFFER_SIZE];
 	if (http_judge) {
-		_get_solution_http(solution_id, work_dir, lang);
+		_get_solution_http(solution_id, work_dir, lang, src_pth);
 	} else {
-		_get_solution_mysql(solution_id, work_dir, lang);
+		_get_solution_mysql(solution_id, work_dir, lang, src_pth);
 	}
 	/*
 	 * 以下代码均为二次开发
 	 */
 	char sql[BUFFER_SIZE];
 	MYSQL_RES *res;
-	//MYSQL_ROW row;
-	//sprintf(sql, "SELECT algorithm from problem where problem_id=%d", p_id);
 	sprintf(sql, "SELECT remark from p_k where problem_id=%d", p_id);
 	mysql_real_query(conn, sql, strlen(sql));
 	res = mysql_store_result(conn);
@@ -1151,24 +1151,16 @@ void get_solution(int solution_id, char * work_dir, int lang, int p_id, char* us
 			return;
 		}
 	}
-	//row = mysql_fetch_row(res);
-	//int boolean;
-	//sscanf(row[0], "%d", &boolean);
 	mysql_free_result(res);
-	//if (boolean == 0) {
-	//	return;
-	//}
 
 	char src_path[256] = { 0 };
 	char sp_id[256] = { 0 };
-	sprintf(src_path, "%s/Main.c", work_dir);
+	sprintf(src_path, "%s/%s", work_dir, src_pth);
 	sprintf(sp_id, "%d", p_id);
 	
 	pid_t pid  = fork();
 	if (pid == 0) {
 		execl("/usr/bin/judge_key", "judge_key", src_path, sp_id, oj_home, (char*)NULL);
-		//execl("/usr/bin/algorithm", "algorithm", "/home/judge/run1/Main.c", (char*)NULL);
-		//execl("/usr/bin/algorithm", "algorithm", "/home/crazymad/github/hustoj/trunk/core/algorithm/test.c", (char*)NULL);
 	} else if (pid > 0){
 		int ret;
 		wait(&ret);
