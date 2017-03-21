@@ -24,6 +24,7 @@ static char db_name[BUFFER_SIZE];
 static int port_number;
 static int p_id;			// 题目编号
 static int statu = 0;					// 当前读取的状态（注释、括号、引号）
+char key_word[BUFFER_SIZE];
 /*
  * 1 单行注释
  * 2 多行注释 
@@ -123,11 +124,12 @@ void get_keyword_mysql() {
 	char sql[BUFFER_SIZE];
 	MYSQL_RES *res;
 	MYSQL_ROW row;
-	sprintf(sql, "SELECT key_word from key_words where problem_id=%d", p_id);
+	sprintf(sql, "SELECT remark from p_k where problem_id=%d", p_id);
 	mysql_real_query(conn, sql, strlen(sql));
 	res = mysql_store_result(conn);
 	row = mysql_fetch_row(res);
-	printf("%s\n", row[0]);
+	//printf("%s\n", row[0]);
+	strcpy(key_word, row[0]);
 	//mysql_free_result(res);
 }
 // 寻找line中非标识符的位置在哪里
@@ -206,7 +208,7 @@ void check_algorithm(FILE *s_code) {
 			strcpy(body, ptr);
 			body[ret+1] = '\0';
 			//printf("%s\t", body);
-			if (!strcmp(body, "switch")) {
+			if (!strcmp(body, key_word)) {
 				printf("使用了swtich语句\n");
 				exit(0);
 			}

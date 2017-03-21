@@ -69,6 +69,7 @@
 #define OJ_CE 11			// 编译错误
 #define OJ_CO 12			//
 #define OJ_TR 13			//
+#define OJ_KW 14			// 关键字检查错误
 /*copy from ZOJ
  http://code.google.com/p/zoj/source/browse/trunk/judge_client/client/tracer.cc?spec=svn367&r=367#39
  */
@@ -1133,17 +1134,30 @@ void get_solution(int solution_id, char * work_dir, int lang, int p_id, char* us
 	 */
 	char sql[BUFFER_SIZE];
 	MYSQL_RES *res;
-	MYSQL_ROW row;
-	sprintf(sql, "SELECT algorithm from problem where problem_id=%d", p_id);
+	//MYSQL_ROW row;
+	//sprintf(sql, "SELECT algorithm from problem where problem_id=%d", p_id);
+	sprintf(sql, "SELECT remark from p_k where problem_id=%d", p_id);
 	mysql_real_query(conn, sql, strlen(sql));
 	res = mysql_store_result(conn);
-	row = mysql_fetch_row(res);
-	int boolean;
-	sscanf(row[0], "%d", &boolean);
-	mysql_free_result(res);
-	if (boolean == 0) {
+	if (mysql_num_rows(res) == 0) {
 		return;
+	} else {
+		MYSQL_ROW row;
+		sprintf(sql, "SELECT algorithm from problem where problem_id=%d", p_id);
+		mysql_real_query(conn, sql, strlen(sql));
+		res = mysql_store_result(conn);
+		row = mysql_fetch_row(res);
+		if (row[0] == NULL) {
+			return;
+		}
 	}
+	//row = mysql_fetch_row(res);
+	//int boolean;
+	//sscanf(row[0], "%d", &boolean);
+	mysql_free_result(res);
+	//if (boolean == 0) {
+	//	return;
+	//}
 
 	char src_path[256] = { 0 };
 	char sp_id[256] = { 0 };
@@ -1152,7 +1166,7 @@ void get_solution(int solution_id, char * work_dir, int lang, int p_id, char* us
 	
 	pid_t pid  = fork();
 	if (pid == 0) {
-		execl("/usr/bin/algorithm", "algorithm", src_path, sp_id, oj_home, (char*)NULL);
+		execl("/usr/bin/judge_key", "judge_key", src_path, sp_id, oj_home, (char*)NULL);
 		//execl("/usr/bin/algorithm", "algorithm", "/home/judge/run1/Main.c", (char*)NULL);
 		//execl("/usr/bin/algorithm", "algorithm", "/home/crazymad/github/hustoj/trunk/core/algorithm/test.c", (char*)NULL);
 	} else if (pid > 0){
@@ -1163,22 +1177,25 @@ void get_solution(int solution_id, char * work_dir, int lang, int p_id, char* us
 		FILE *ce = fopen("ce.txt", "w");
 		switch (ret) {			// 判断algorithm检查器返回值
 			case 1:				// 方便起见，先将不符合要求的结果定义为编译错误
-				fprintf(ce, "没用swtich");
-				fclose(ce);
-				addceinfo(solution_id);
-				update_solution(solution_id, OJ_CE, 0, 0, 0, 0, 0.0);
+				//fprintf(ce, "没有使用");
+				//fclose(ce);
+				//addceinfo(solution_id);
+				update_solution(solution_id, OJ_KW, 0, 0, 0, 0, 0.0);
 				update_user(user_id);
 				update_problem(p_id);
 				if (!http_judge)
 					mysql_close(conn);
 				clean_workdir(work_dir);								// 清理工作目录，为下个solution准备
-				write_log("compile error");
+				write_log("key word check error");
 				exit(0);
 				break;
 			case 2:
 				printf("打开文件失败！\n");
 				exit(0);
 				break;
+			case -1:
+				write_log("algorithm unusual exit");
+				exit(0);
 		}
 		fclose(ce);
 	}
